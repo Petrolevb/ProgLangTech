@@ -1,0 +1,72 @@
+
+Program : definitions 
+
+definition : directives functions statements constants comments
+
+function : ['inline' | ] type name argument body
+statement : typedefs variables structs
+constant : usingsStatement
+
+typedefs = 'typedef' type identifier ';'
+
+structs = 'struct' identifier '{' declarations '}' ';'
+declarations = € | type identifier ';' declarations
+
+argument : '(' [argDeclaration [, ...]] ')'
+argDeclaration : ['const'] type ['&'] [identifier [initialisation]]   (const int& x = 3)
+
+body = '{' [ statements | ';' ] '}'
+
+statements =  expression ';'
+
+expression = returnExpr  |
+             whileExpr   |
+             doWhileExpr |
+             forExpr     |
+             ifExpr      |
+             blockExpr   
+
+expr = literal |
+       expr '[' identifier ']'          | const '::' identifier |
+       expr '(' [ expr [, [expr]]] ')'  |
+       expr '.' epxr                    | expr '->' expr        |
+       expr '++' | expr '--' | '*' expr |
+       '++' expr | '--' expr | '!' expr |
+       expr '*' expr  | expr '/' expr  | expr '%' expr |
+       expr '+' expr  | expr '-' expr  | 
+       expr '<<' expr | expr '>>' expr |
+       expr '<' expr  | expr '>' expr  | expr '>=' expr | expr '<=' expr |
+       expr '==' expr | expr '!=' expr |
+       expr '&&' expr |
+       expr '||' expr |
+       expr '=' expr  | expr '+=' expr | expr '-=' expr
+       expr '?' expr ':' expr |
+       'throw' expr
+
+
+type = void
+       short
+       int
+       float
+       double
+       string
+
+literal = '"' letters '"' [ literal ] | 
+          number                      | 
+          number '.' number
+identifier = letter [ identifierSecPart ]
+identifierSecPart = letter [identifierSecPart] |
+                    digit  [identifierSecPart] | 
+                    '_'    [identifierSecPart] |
+                    €
+
+
+number  = digit  [number]
+letters = letter [letters]
+digit = [0-9]
+letter = [a-zA-Z]
+
+
+comments = '/*' [...] '*/'   |
+           '//' [...]  '\n'  |
+           '#'  [...]  '\n'
