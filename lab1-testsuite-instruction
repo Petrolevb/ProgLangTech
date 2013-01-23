@@ -1,0 +1,7 @@
+compilation : 
+
+gch --make -o progs-test-lab1 progs-test-lab1.hs
+
+
+then run this prog with the .cf file
+Note : then entry point must be called Program
