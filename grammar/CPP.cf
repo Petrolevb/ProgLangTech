@@ -1,0 +1,30 @@
+-- LABEL . VALUE_CAT ::= PROD ;
+
+-- terminator is a token that appear after every item of a list
+
+
+
+entrypoints Program ;
+
+
+DefFunc . Func ::= Type Identifier Argument Body  ;
+Inline . SpecFunc ::= "inline" ;
+EmptyI . Identifier ::= "" ;
+EmptyA . Argument ::= "" ;
+
+
+-- Body is a list of expression
+EmptyB . Body ::= "{" "}" ;
+
+
+TVoid.  Type ::= "void" ; 
+TBool.  Type ::= "bool" ;
+TInt.   Type ::= "int" ; 
+TDouble.Type ::= "double" ;
+
+
+coercions Exp 16 ;
+
+comment "/*" "*/" ;
+comment "//" ;
+comment "#" ;
