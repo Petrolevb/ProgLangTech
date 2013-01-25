@@ -6,24 +6,80 @@
 
 entrypoints Program ;
 
+Prg . Program ::=  [Expression] ;
 
-DefFunc . Func ::= Type Identifier Argument Body  ;
+DefExprExp . Expression ::= Exp ;
+DefExprFunc. Expression ::= Func ;
+
+terminator Expression "" ;
+
+
+DefFunc . Func ::= Signature Arguments Body  ;
 Inline . SpecFunc ::= "inline" ;
-EmptyI . Identifier ::= "" ;
-EmptyA . Argument ::= "" ;
+
+
+DefSig . Signature ::= Type Ident; 
+
+
+-- Arguments is a list of Argument, or list of signature 
+DefArguments . Arguments ::= "(" [Signature] ")" ;
+separator Signature "," ;
 
 
 -- Body is a list of expression
-EmptyB . Body ::= "{" "}" ;
+BaseBody . Body ::= "{" [Exp] "}" ;
 
+SimpleDec . Variables ::= Type Ident ;
+MultiDec  . Variables ::= Type Ident "," [Ident] ;
+separator nonempty Ident "," ;
+Assign    . Variables ::= Type Ident "=" Exp ;
 
 TVoid.  Type ::= "void" ; 
 TBool.  Type ::= "bool" ;
 TInt.   Type ::= "int" ; 
 TDouble.Type ::= "double" ;
+TString.Type ::= "string" ;
 
 
-coercions Exp 16 ;
+EInt    . Exp15 ::= Integer ;
+EDouble . Exp15 ::= Double ;
+EFalse  . Exp15 ::= "false" ;
+ETrue   . Exp15 ::= "true" ;
+EString . Exp15 ::= String ;
+ExpId   . ExpId ::= Variables ;
+DefFun  . Exp15 ::= Func ;
+
+EIncr   . Exp14 ::= Exp15 "++" ;
+EDecr   . Exp14 ::= Exp15 "--" ;
+EPoIncr . Exp13 ::= "++" Exp14 ;
+EPoDecr . Exp13 ::= "--" Exp14 ;
+
+ENeg    . Exp13 ::= "-" Exp14 ;
+
+EMul  . Exp12 ::= Exp12 "*" Exp13 ; 
+EDiv  . Exp12 ::= Exp12 "/" Exp13 ;
+EMod  . Exp12 ::= Exp12 "%" Exp13 ;
+
+EAdd  . Exp11 ::= Exp11 "+" Exp12 ;
+ESub  . Exp11 ::= Exp11 "-" Exp12 ;
+
+EStSup. Exp9 ::= Exp9 ">" Exp10 ;
+EStInf. Exp9 ::= Exp9 "<" Exp10 ;
+ESuEg . Exp9 ::= Exp9 ">=" Exp10 ;
+EInfEg. Exp9 ::= Exp9 "<=" Exp10 ;
+
+EEq   . Exp8 ::= Exp8 "==" Exp9 ;
+EIneq . Exp8 ::= Exp8 "!=" Exp9 ;
+
+EConj . Exp4 ::= Exp4 "&&" Exp5 ;
+EDisj . Exp3 ::= Exp3 "||" Exp4 ;
+EAss  . Exp2 ::= Exp3 "=" Exp2 ; 
+
+coercions Exp 15 ;
+separator Exp "," ;
+-- terminator Exp ";" ;
+
+-- position token Identifier (letter (letter | digit | '_')*) ;
 
 comment "/*" "*/" ;
 comment "//" ;
