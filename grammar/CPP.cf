@@ -8,14 +8,13 @@ entrypoints Program ;
 
 Prg . Program ::=  [Expression] ;
 
-DefExprExp . Expression ::= Exp ;
-DefExprFunc. Expression ::= Func ;
-
+DefExprExp . Expression ::= Exp ";" ;
+DefExprFunc. Expression ::= Func    ;
 terminator Expression "" ;
 
 
-DefFunc . Func ::= Signature Arguments Body  ;
-Inline . SpecFunc ::= "inline" ;
+DefFunc    . Func ::= Signature Arguments Body ;
+InlineFunc . Func ::= "inline" Signature Arguments Body ;
 
 
 DefSig . Signature ::= Type Ident; 
@@ -26,8 +25,24 @@ DefArguments . Arguments ::= "(" [Signature] ")" ;
 separator Signature "," ;
 
 
--- Body is a list of expression
-BaseBody . Body ::= "{" [Exp] "}" ;
+-- Body is a list of statements
+BaseBody   . Body ::= "{" [Statement] "}" ;
+terminator Statement "" ;
+
+EmptStm     . Statement ::= ";"                                          ;
+ExpStm      . Statement ::= Exp ";"                                      ;
+BodyStm     . Statement ::= "{" [Statement] "}"                          ;
+ReturnStm   . Statement ::= "return" Exp ";"                             ;
+WhileStm    . Statement ::= "while" "(" Exp ")" Body                     ;
+DoWhileStm  . Statement ::= "do" Body "while" "(" Exp ")"  ";"           ;
+ForStm      . Statement ::= "for" "(" Exp ";" Exp ";" Exp ")" Body       ;
+IfSimpleStm . Statement ::= "if" "(" Exp ")" Body                        ;
+IfElseStm   . Statement ::= "if" "(" Exp ")" Body "else" Body            ;
+SwitchStm   . Statement ::= "switch" "(" Exp ")" "{" [CaseStatement] "}" ;
+terminator CaseStatement ";" ;
+BaseCaseStm    . CaseStatement ::= "case" Constant ":" Body "break" ";" ;
+DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break" ";" ;
+
 
 SimpleDec . Variables ::= Type Ident ;
 MultiDec  . Variables ::= Type Ident "," [Ident] ;
@@ -41,12 +56,18 @@ TDouble.Type ::= "double" ;
 TString.Type ::= "string" ;
 
 
-EInt    . Exp15 ::= Integer ;
-EDouble . Exp15 ::= Double ;
-EFalse  . Exp15 ::= "false" ;
-ETrue   . Exp15 ::= "true" ;
-EString . Exp15 ::= String ;
-ExpId   . ExpId ::= Variables ;
+CInt    . Constant ::= Integer ;
+CDouble . Constant ::= Double ;
+CFalse  . Constant ::= "false" ;
+CTrue   . Constant ::= "true" ;
+CString . Constant ::= String ;
+
+EConst  . Exp16 ::= Constant ;
+EId     . Exp16 ::= Ident ;
+
+EIndex  . Exp15 ::= Exp15 "[" Exp16 "]" ;
+EQConst . Exp15 ::= Exp15 "::" Exp15 ;
+ETemId  . Exp15 ::= Exp15 "<" Constant ">" ;
 DefFun  . Exp15 ::= Func ;
 
 EIncr   . Exp14 ::= Exp15 "++" ;
@@ -63,6 +84,9 @@ EMod  . Exp12 ::= Exp12 "%" Exp13 ;
 EAdd  . Exp11 ::= Exp11 "+" Exp12 ;
 ESub  . Exp11 ::= Exp11 "-" Exp12 ;
 
+ELShift . Exp10 ::= Exp10 "<<" Exp11 ;
+ERShift . Exp10 ::= Exp10 ">>" Exp11 ;
+
 EStSup. Exp9 ::= Exp9 ">" Exp10 ;
 EStInf. Exp9 ::= Exp9 "<" Exp10 ;
 ESuEg . Exp9 ::= Exp9 ">=" Exp10 ;
@@ -75,7 +99,7 @@ EConj . Exp4 ::= Exp4 "&&" Exp5 ;
 EDisj . Exp3 ::= Exp3 "||" Exp4 ;
 EAss  . Exp2 ::= Exp3 "=" Exp2 ; 
 
-coercions Exp 15 ;
+coercions Exp 16 ;
 separator Exp "," ;
 -- terminator Exp ";" ;
 
