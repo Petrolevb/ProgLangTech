@@ -7,10 +7,13 @@
 entrypoints Program ;
 
 Prg . Program ::=  [Expression] ;
+terminator Expression "" ;
 
 DefExprExp . Expression ::= Exp ";" ;
 DefExprFunc. Expression ::= Func    ;
-terminator Expression "" ;
+DefUsExp   . Expression ::= "using" [SpecType] ";" ;
+--TypedefExp . Expression ::= "typedef" [SpecType] Ident ";" ;
+separator nonempty SpecType "::" ;
 
 
 DefFunc    . Func ::= Signature Arguments Body ;
@@ -32,50 +35,55 @@ terminator Statement "" ;
 EmptStm     . Statement ::= ";"                                          ;
 ExpStm      . Statement ::= Exp ";"                                      ;
 BodyStm     . Statement ::= "{" [Statement] "}"                          ;
+TypedefStm  . Statement ::= "typedef" [SpecType] Ident ";" ;
 ReturnStm   . Statement ::= "return" Exp ";"                             ;
-WhileStm    . Statement ::= "while" "(" Exp ")" Body                     ;
-DoWhileStm  . Statement ::= "do" Body "while" "(" Exp ")"  ";"           ;
-ForStm      . Statement ::= "for" "(" Exp ";" Exp ";" Exp ")" Body       ;
-IfSimpleStm . Statement ::= "if" "(" Exp ")" Body                        ;
-IfElseStm   . Statement ::= "if" "(" Exp ")" Body "else" Body            ;
+WhileStm    . Statement ::= "while" "(" Exp ")" Statement                ;
+DoWhileStm  . Statement ::= "do" Statement "while" "(" Exp ")"  ";"      ;
+ForStm      . Statement ::= "for" "(" Exp ";" Exp ";" Exp ")" Statement  ;
+IfSimpleStm . Statement ::= "if" "(" Exp ")" Statement                   ;
+IfElseStm   . Statement ::= "if" "(" Exp ")" Statement "else" Statement  ;
 SwitchStm   . Statement ::= "switch" "(" Exp ")" "{" [CaseStatement] "}" ;
 terminator CaseStatement ";" ;
-BaseCaseStm    . CaseStatement ::= "case" Constant ":" Body "break" ";" ;
-DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break" ";" ;
+BaseCaseStm    . CaseStatement ::= "case" Constant ":" Body "break"  ;
+DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break"  ;
 
 
-SimpleDec . Variables ::= Type Ident ;
-MultiDec  . Variables ::= Type Ident "," [Ident] ;
-separator nonempty Ident "," ;
 
-TVoid.  Type ::= "void" ; 
-TBool.  Type ::= "bool" ;
-TInt.   Type ::= "int" ; 
-TDouble.Type ::= "double" ;
-TString.Type ::= "string" ;
+TVoid   . Type ::= "void"   ; 
+TBool   . Type ::= "bool"   ;
+TInt    . Type ::= "int"    ; 
+TDouble . Type ::= "double" ;
+TSpec   . Type ::= SpecType ;
+TPerso  . SpecType ::= Ident ;
+Template. SpecType ::= Ident "<" Type ">" ;
 
-
-CInt    . Constant ::= Integer ;
-CDouble . Constant ::= Double ;
-CFalse  . Constant ::= "false" ;
-CTrue   . Constant ::= "true" ;
-CString . Constant ::= String ;
+CInt    . Constant ::= [Integer] ;
+terminator nonempty Integer ""  ;
+CDouble . Constant ::= Double   ;
+CFalse  . Constant ::= "false"  ;
+CTrue   . Constant ::= "true"   ;
+CString . Constant ::= [String] ;
+terminator nonempty String ""   ;
+CVar    . Constant ::= Ident    ;
 
 EConst  . Exp16 ::= Constant ;
-EId     . Exp16 ::= Ident ;
 
-EIndex  . Exp15 ::= Exp15 "[" Exp16 "]" ;
-EQConst . Exp15 ::= Exp15 "::" Exp15 ;
-EVar    . Exp15 ::= Variables ;
-ETemId  . Exp15 ::= Exp15 "<" Constant ">" ;
-DefFun  . Exp15 ::= Func ;
+EIndex     . Exp15 ::= Exp15 "[" Exp "]" ;
+EQualConst . Exp15 ::= [SpecType] [Ident]  ;
+EVar       . Exp15 ::= Type [Ident]        ;
+FunCall    . Exp15 ::= Exp15 "(" [Exp] ")" ;
+separator Ident "," ;
+
+EPointProj . Exp14 ::= Exp14 "." Exp15  ;
+EArrowProj . Exp14 ::= Exp14 "->" Exp15 ;
 
 EIncr   . Exp14 ::= Exp15 "++" ;
 EDecr   . Exp14 ::= Exp15 "--" ;
+EDeferen. Exp14 ::= "*" Exp15 ;
+
 EPoIncr . Exp13 ::= "++" Exp14 ;
 EPoDecr . Exp13 ::= "--" Exp14 ;
-
-ENeg    . Exp13 ::= "-" Exp14 ;
+ENeg    . Exp13 ::= "!" Exp14 ;
 
 EMul  . Exp12 ::= Exp12 "*" Exp13 ; 
 EDiv  . Exp12 ::= Exp12 "/" Exp13 ;
@@ -85,10 +93,11 @@ EAdd  . Exp11 ::= Exp11 "+" Exp12 ;
 ESub  . Exp11 ::= Exp11 "-" Exp12 ;
 
 ELShift . Exp10 ::= Exp10 "<<" Exp11 ;
+
 ERShift . Exp10 ::= Exp10 ">>" Exp11 ;
 
-EStSup. Exp9 ::= Exp9 ">" Exp10 ;
 EStInf. Exp9 ::= Exp9 "<" Exp10 ;
+EStSup. Exp9 ::= Exp9 ">" Exp10 ;
 ESuEg . Exp9 ::= Exp9 ">=" Exp10 ;
 EInfEg. Exp9 ::= Exp9 "<=" Exp10 ;
 
@@ -96,14 +105,20 @@ EEq   . Exp8 ::= Exp8 "==" Exp9 ;
 EIneq . Exp8 ::= Exp8 "!=" Exp9 ;
 
 EConj . Exp4 ::= Exp4 "&&" Exp5 ;
+
 EDisj . Exp3 ::= Exp3 "||" Exp4 ;
-EAss  . Exp2 ::= Exp3 "=" Exp2 ; 
+
+EAss  . Exp2 ::= Exp14 "=" Exp2  ; 
+
+EPlAss. Exp2 ::= Exp14 "+=" Exp2 ;
+ESuAss. Exp2 ::= Exp14 "-=" Exp2 ;
+
+EConditional . Exp2 ::= Exp3 "?" Exp ":" Exp3 ;
+
+Exception    . Exp1 ::= "throw" Exp2 ;
 
 coercions Exp 16 ;
 separator Exp "," ;
--- terminator Exp ";" ;
-
--- position token Identifier (letter (letter | digit | '_')*) ;
 
 comment "/*" "*/" ;
 comment "//" ;
