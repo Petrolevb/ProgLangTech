@@ -47,7 +47,6 @@ DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break" ";" ;
 SimpleDec . Variables ::= Type Ident ;
 MultiDec  . Variables ::= Type Ident "," [Ident] ;
 separator nonempty Ident "," ;
-Assign    . Variables ::= Type Ident "=" Exp ;
 
 TVoid.  Type ::= "void" ; 
 TBool.  Type ::= "bool" ;
@@ -67,6 +66,7 @@ EId     . Exp16 ::= Ident ;
 
 EIndex  . Exp15 ::= Exp15 "[" Exp16 "]" ;
 EQConst . Exp15 ::= Exp15 "::" Exp15 ;
+EVar    . Exp15 ::= Variables ;
 ETemId  . Exp15 ::= Exp15 "<" Constant ">" ;
 DefFun  . Exp15 ::= Func ;
 
