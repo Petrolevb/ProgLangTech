@@ -9,7 +9,7 @@ entrypoints Program ;
 Prg . Program ::=  [Expression] ;
 terminator Expression "" ;
 
---DefExprExp . Expression ::= Exp ";" ;
+DefExprExp . Expression ::= Exp ";" ;
 DefExprFunc. Expression ::= Func    ;
 DefUsExp   . Expression ::= "using" [SpecType] ";" ;
 --TypedefExp . Expression ::= "typedef" [SpecType] Ident ";" ;
@@ -48,19 +48,20 @@ DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break"  ;
 
 
 
-TVoid   . Type ::= Const "void"   ; 
-TBool   . Type ::= Const "bool"   ;
-TInt    . Type ::= Const "int"    ; 
-TDouble . Type ::= Const "double" ;
-TSpec   . Type ::= Const SpecType ;
+ConstType . Type ::= "const" Type;
+RefType   . Type ::= Type "&";
+PointType . Type ::= Type "*";
+EmptyArTy . Type ::= Type "[]";
+SizedArTy . Type ::= Type "[" Integer "]" ;
+BaseType  . Type ::= IdentType;
+
+TVoid   . IdentType ::=  "void"    ; 
+TBool   . IdentType ::=  "bool"    ;
+TInt    . IdentType ::=  "int"     ;
+TDouble . IdentType ::=  "double"  ;
+TSpec   . IdentType ::=  SpecType  ;
 TPerso  . SpecType ::= Ident ;
 Template. SpecType ::= Ident "<" Type ">" ;
-
-EmptyConst .Const ::= "" ;
-ConstType  . Const ::= "const" ;
---PointType  . AddType ::= "*" ;
---RefType    . AddType ::= "&" ;
---ArrayVar   . AddVar  ::= "[]"
 
 
 CInt    . Constant ::= [Integer] ;
@@ -72,7 +73,8 @@ CString . Constant ::= [String] ;
 terminator nonempty String ""   ;
 CVar    . Constant ::= Ident    ;
 
-EConst  . Exp16 ::= Constant ;
+
+EConst  . Exp16 ::= Constant;
 
 EIndex     . Exp15 ::= Exp15 "[" Exp "]" ;
 EQualConst . Exp15 ::= [SpecType] [Ident]  ;
