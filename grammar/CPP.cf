@@ -9,7 +9,7 @@ entrypoints Program ;
 Prg . Program ::=  [Expression] ;
 terminator Expression "" ;
 
-DefExprExp . Expression ::= Exp ";" ;
+--DefExprExp . Expression ::= Exp ";" ;
 DefExprFunc. Expression ::= Func    ;
 DefUsExp   . Expression ::= "using" [SpecType] ";" ;
 --TypedefExp . Expression ::= "typedef" [SpecType] Ident ";" ;
@@ -20,8 +20,7 @@ DefFunc    . Func ::= Signature Arguments Body ;
 InlineFunc . Func ::= "inline" Signature Arguments Body ;
 
 
-DefSig . Signature ::= Type Ident; 
-
+DefSig . Signature ::= Type Ident;
 
 -- Arguments is a list of Argument, or list of signature 
 DefArguments . Arguments ::= "(" [Signature] ")" ;
@@ -49,13 +48,20 @@ DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break"  ;
 
 
 
-TVoid   . Type ::= "void"   ; 
-TBool   . Type ::= "bool"   ;
-TInt    . Type ::= "int"    ; 
-TDouble . Type ::= "double" ;
-TSpec   . Type ::= SpecType ;
+TVoid   . Type ::= Const "void"   ; 
+TBool   . Type ::= Const "bool"   ;
+TInt    . Type ::= Const "int"    ; 
+TDouble . Type ::= Const "double" ;
+TSpec   . Type ::= Const SpecType ;
 TPerso  . SpecType ::= Ident ;
 Template. SpecType ::= Ident "<" Type ">" ;
+
+EmptyConst .Const ::= "" ;
+ConstType  . Const ::= "const" ;
+--PointType  . AddType ::= "*" ;
+--RefType    . AddType ::= "&" ;
+--ArrayVar   . AddVar  ::= "[]"
+
 
 CInt    . Constant ::= [Integer] ;
 terminator nonempty Integer ""  ;
