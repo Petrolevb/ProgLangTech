@@ -1,9 +1,3 @@
--- LABEL . VALUE_CAT ::= PROD ;
-
--- terminator is a token that appear after every item of a list
-
-
-
 entrypoints Program ;
 
 Prg . Program ::=  [Expression] ;
@@ -26,7 +20,6 @@ separator Arguments "," ;
 EmptStm     . Statement ::= ";"                                          ;
 ExpStm      . Statement ::= Exp ";"                                      ;
 BodyStm     . Statement ::= "{" [Statement] "}"                          ;
---TypedefStm  . Statement ::= TypedefExp ; 
 TypedefStm  . Statement ::= "typedef" [QualConst] Ident  ";"                      ;
 ReturnStm   . Statement ::= "return" Exp ";"                             ;
 WhileStm    . Statement ::= "while" "(" Exp ")" Statement                ;
@@ -46,9 +39,8 @@ ConstType . Type ::= "const" Type;
 RefType   . Type ::= Type "&";
 PointType . Type ::= Type "*";
 EmptyArTy . Type ::= Type "[]";
---SizedArTy . Type ::= Type "[" Integer "]" ;
+TemplateTy. Type ::= Type "<" Type ">" ;
 BaseType  . Type ::= IdentType ;
---iPersoType . Type ::= QualConst  ;
 TVoid   . IdentType ::=  "void"   ; 
 TBool   . IdentType ::=  "bool"   ;
 TInt    . IdentType ::=  "int"    ;
@@ -64,7 +56,7 @@ CString . Constant ::= [String] ;
 terminator nonempty String ""   ;
 
 QCPerso . QualConst ::= Type ;
-Template. QualConst ::= Type "<" Type ">" ;
+--Template. QualConst ::= Type "<" Type ">" ;
 
 EConst  . Exp16 ::= Constant;
 
