@@ -8,8 +8,12 @@ DefUsExp   . Expression ::= "using" [QualConst] ";" ;
 TypedefExp . Expression ::= "typedef" [QualConst] Ident ";" ;
 DeclExp    . Expression ::= Arguments ";" ;
 
-DefFunc    . Func ::=          Type Ident "(" [Arguments] ")" "{" [Statement] "}" ;
-InlineFunc . Func ::= "inline" Type Ident "(" [Arguments] ")" "{" [Statement] "}" ;
+DefFunc    . Func ::=          Type Ident "(" [Arguments] ")" Body ;
+InlineFunc . Func ::= "inline" Type Ident "(" [Arguments] ")" Body ;
+
+
+EmptyBody . Body ::= ";" ;
+BodyFun   . Body ::= "{" [Statement] "}" ;
 
 TypeArguments   . Arguments ::= Type ;
 DefArguments    . Arguments ::= Type Ident ;
@@ -39,7 +43,8 @@ ConstType . Type ::= "const" Type;
 RefType   . Type ::= Type "&";
 PointType . Type ::= Type "*";
 EmptyArTy . Type ::= Type "[]";
-TemplateTy. Type ::= Type "<" Type ">" ;
+TemplateTy. Type ::= Type "<" [Type] ">" ;
+separator nonempty Type "," ;
 BaseType  . Type ::= IdentType ;
 TVoid   . IdentType ::=  "void"   ; 
 TBool   . IdentType ::=  "bool"   ;
@@ -53,6 +58,7 @@ CDouble . Constant ::= Double   ;
 CFalse  . Constant ::= "false"  ;
 CTrue   . Constant ::= "true"   ;
 CString . Constant ::= [String] ;
+CChar   . Constant ::= Char     ;
 terminator nonempty String ""   ;
 
 QCPerso . QualConst ::= Type ;
