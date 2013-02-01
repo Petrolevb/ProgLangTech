@@ -9,32 +9,25 @@ entrypoints Program ;
 Prg . Program ::=  [Expression] ;
 terminator Expression "" ;
 
-DefExprExp . Expression ::= Exp ";" ;
 DefExprFunc. Expression ::= Func    ;
-DefUsExp   . Expression ::= "using" [SpecType] ";" ;
---TypedefExp . Expression ::= "typedef" [SpecType] Ident ";" ;
-separator nonempty SpecType "::" ;
+DefUsExp   . Expression ::= "using" [QualConst] ";" ;
+TypedefExp . Expression ::= "typedef" [QualConst] Ident ";" ;
+DeclExp    . Expression ::= Arguments ";" ;
 
+DefFunc    . Func ::=          Type Ident "(" [Arguments] ")" "{" [Statement] "}" ;
+InlineFunc . Func ::= "inline" Type Ident "(" [Arguments] ")" "{" [Statement] "}" ;
 
-DefFunc    . Func ::= Signature Arguments Body ;
-InlineFunc . Func ::= "inline" Signature Arguments Body ;
+TypeArguments   . Arguments ::= Type ;
+DefArguments    . Arguments ::= Type Ident ;
+AffectArguments . Arguments ::= Type Ident "=" Constant;
+separator Arguments "," ;
 
-
-DefSig . Signature ::= Type Ident;
-
--- Arguments is a list of Argument, or list of signature 
-DefArguments . Arguments ::= "(" [Signature] ")" ;
-separator Signature "," ;
-
-
--- Body is a list of statements
-BaseBody   . Body ::= "{" [Statement] "}" ;
-terminator Statement "" ;
 
 EmptStm     . Statement ::= ";"                                          ;
 ExpStm      . Statement ::= Exp ";"                                      ;
 BodyStm     . Statement ::= "{" [Statement] "}"                          ;
-TypedefStm  . Statement ::= "typedef" [SpecType] Ident ";" ;
+--TypedefStm  . Statement ::= TypedefExp ; 
+TypedefStm  . Statement ::= "typedef" [QualConst] Ident  ";"                      ;
 ReturnStm   . Statement ::= "return" Exp ";"                             ;
 WhileStm    . Statement ::= "while" "(" Exp ")" Statement                ;
 DoWhileStm  . Statement ::= "do" Statement "while" "(" Exp ")"  ";"      ;
@@ -42,9 +35,10 @@ ForStm      . Statement ::= "for" "(" Exp ";" Exp ";" Exp ")" Statement  ;
 IfSimpleStm . Statement ::= "if" "(" Exp ")" Statement                   ;
 IfElseStm   . Statement ::= "if" "(" Exp ")" Statement "else" Statement  ;
 SwitchStm   . Statement ::= "switch" "(" Exp ")" "{" [CaseStatement] "}" ;
+terminator Statement "" ;
 terminator CaseStatement ";" ;
-BaseCaseStm    . CaseStatement ::= "case" Constant ":" Body "break"  ;
-DefaultCaseStm . CaseStatement ::= "default"       ":" Body "break"  ;
+BaseCaseStm    . CaseStatement ::= "case" Constant ":" Statement "break"  ;
+DefaultCaseStm . CaseStatement ::= "default"       ":" Statement "break"  ;
 
 
 
@@ -52,17 +46,14 @@ ConstType . Type ::= "const" Type;
 RefType   . Type ::= Type "&";
 PointType . Type ::= Type "*";
 EmptyArTy . Type ::= Type "[]";
-SizedArTy . Type ::= Type "[" Integer "]" ;
-BaseType  . Type ::= IdentType;
-
-TVoid   . IdentType ::=  "void"    ; 
-TBool   . IdentType ::=  "bool"    ;
-TInt    . IdentType ::=  "int"     ;
-TDouble . IdentType ::=  "double"  ;
-TSpec   . IdentType ::=  SpecType  ;
-TPerso  . SpecType ::= Ident ;
-Template. SpecType ::= Ident "<" Type ">" ;
-
+--SizedArTy . Type ::= Type "[" Integer "]" ;
+BaseType  . Type ::= IdentType ;
+--iPersoType . Type ::= QualConst  ;
+TVoid   . IdentType ::=  "void"   ; 
+TBool   . IdentType ::=  "bool"   ;
+TInt    . IdentType ::=  "int"    ;
+TDouble . IdentType ::=  "double" ;
+TPerso  . IdentType ::= Ident ;
 
 CInt    . Constant ::= [Integer] ;
 terminator nonempty Integer ""  ;
@@ -71,16 +62,18 @@ CFalse  . Constant ::= "false"  ;
 CTrue   . Constant ::= "true"   ;
 CString . Constant ::= [String] ;
 terminator nonempty String ""   ;
-CVar    . Constant ::= Ident    ;
 
+QCPerso . QualConst ::= Type ;
+Template. QualConst ::= Type "<" Type ">" ;
 
 EConst  . Exp16 ::= Constant;
 
+EQualConst . Exp15 ::= [QualConst] ;
+separator nonempty QualConst "::" ;
 EIndex     . Exp15 ::= Exp15 "[" Exp "]" ;
-EQualConst . Exp15 ::= [SpecType] [Ident]  ;
-EVar       . Exp15 ::= Type [Ident]        ;
 FunCall    . Exp15 ::= Exp15 "(" [Exp] ")" ;
-separator Ident "," ;
+VarDeclExp . Exp15 ::= Exp15 [Ident] ;
+separator nonempty Ident "," ;
 
 EPointProj . Exp14 ::= Exp14 "." Exp15  ;
 EArrowProj . Exp14 ::= Exp14 "->" Exp15 ;
