@@ -5,6 +5,7 @@ type Ident = String
 -- Env is a stack of context
 type Env = [[(Type, Ident)]]
 
+data Error = Error String | Ok
 
 -- Has to wait an import
 type Exp = String
@@ -19,23 +20,24 @@ infer :: Env -> Exp -> Type
 infer = undefined
 
 -- Check type of exp
-checkExp :: Env -> Exp -> Type -> Maybe String 
-checkExp gamma e t = Nothing
+checkExp :: Env -> Exp -> Type -> Error 
+checkExp gamma e t = Error "Error"
 
 -- check sequence of statetments
-checkStm :: Env -> Statement -> Maybe String
-checkStm gamma stm = Nothing
+checkStm :: Env -> Statement -> Error
+checkStm gamma stm = Ok
 
 -- check function definition
-checkFun :: Env -> Def -> Maybe String
-checkFun gamma fun = Nothing
+checkFun :: Env -> Def -> Error
+checkFun gamma fun = Ok
 
 -- Check a whole program
-check :: Program -> Maybe String
-check prog = Nothing
+check :: Program -> Error
+check prog = Ok
 
 lookupVar :: Ident -> Env -> Type
-lookupVar = undefined
+lookupVar id gamma = undefined 
+
 lookupFun :: Ident -> Env -> FunType
 lookupFun = undefined
 
