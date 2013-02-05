@@ -2,7 +2,8 @@ module TypeCheck where
 
 type Type  = String
 type Ident = String
-type Env = [(Type, Ident)]
+-- Env is a stack of context
+type Env = [[(Type, Ident)]]
 
 
 -- Has to wait an import
@@ -39,7 +40,9 @@ lookupFun :: Ident -> Env -> FunType
 lookupFun = undefined
 
 extendVar :: Env -> Ident -> Type -> Env
-extendVar = undefined
+extendVar (gamma:stack) id ty = ((ty, id):gamma):stack
+extendVar []            id ty = ((ty, id):[]):[]
+
 extendFun :: Env -> Def -> Env 
 extendFun = undefined
 
@@ -47,5 +50,5 @@ emptyEnv :: Env
 emptyEnv = []
 
 newblock :: Env -> Env
-newblock = undefined
+newblock e = []:e
 
