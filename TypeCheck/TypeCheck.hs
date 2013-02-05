@@ -2,18 +2,22 @@ module TypeCheck where
 
 type Type  = String
 type Ident = String
--- Env is a stack of context
-type Env = [[(Type, Ident)]]
-
-data Error a = Error String | Ok a
+-- Env is a stack of context and the function initialisation
+type Env     = (Signature, [Context])
+type Context = [(Type, Ident)]
 
 -- Has to wait an import
 type Exp = String
 type Statement = [String]
-type Def = Bool
-type FunType = Bool
+-- Definition is list of functions signatures
+type Def = [Signature]
+-- Signature is the name of the function and list of types
+type Signature = (Ident, FunType)
+type FunType   = ([Type], Type)
 
 type Program = [Statement]
+
+data Error a = Error String | Ok a
 
 -- infer type of exp
 infer :: Env -> Exp -> Error Type
@@ -36,25 +40,25 @@ check :: Program -> Error ()
 check prog = Ok ()
 
 lookupVar :: Ident -> Env -> Error Type
-lookupVar id []                   = Error "Error"
-lookupVar id ([]:stack)           = lookupVar id stack
-lookupVar id (((t, i):env):stack) | i == id   = Ok t
-                                  | otherwise = lookupVar id (env:stack)
+lookupVar id (_, [])                   = Error "Variable not found"
+lookupVar id (s, ([]:stack))           = lookupVar id (s, stack)
+lookupVar id (s, (((t, i):env):stack)) | i == id   = Ok t
+                                       | otherwise = lookupVar id (s, (env:stack))
 
 lookupFun :: Ident -> Env -> Error FunType
 lookupFun = undefined
 
 extendVar :: Env -> Ident -> Type -> Env
-extendVar (gamma:stack) id ty = ((ty, id):gamma):stack
-extendVar []            id ty = ((ty, id):[]):[]
+extendVar (s, (gamma:stack)) id ty = (s, ((ty, id):gamma):stack)
+extendVar (s, [])            id ty = (s, ((ty, id):[]):[])
 
 extendFun :: Env -> Def -> Env 
 extendFun = undefined
 
 emptyEnv :: Env
-emptyEnv = []
+emptyEnv = (("", ([], "")), [])
 
 newblock :: Env -> Env
-newblock e = []:e
+newblock (s, c) = (s, []:c)
  
 gamma = extendVar (newblock $ extendVar (extendVar (emptyEnv) "x" "Int") "y" "Double") "z" "String"
