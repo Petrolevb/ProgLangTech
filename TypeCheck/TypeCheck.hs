@@ -21,7 +21,7 @@ infer = undefined
 
 -- Check type of exp
 checkExp :: Env -> Exp -> Type -> Error 
-checkExp gamma e t = Error "Error"
+checkExp gamma e t = Ok
 
 -- check sequence of statetments
 checkStm :: Env -> Statement -> Error
@@ -36,7 +36,10 @@ check :: Program -> Error
 check prog = Ok
 
 lookupVar :: Ident -> Env -> Type
-lookupVar id gamma = undefined 
+lookupVar id []                   = "Error"
+lookupVar id ([]:stack)           = lookupVar id stack
+lookupVar id (((t, i):env):stack) | i == id   = t
+                                  | otherwise = lookupVar id (env:stack)
 
 lookupFun :: Ident -> Env -> FunType
 lookupFun = undefined
