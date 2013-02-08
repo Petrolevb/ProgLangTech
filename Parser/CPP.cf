@@ -3,32 +3,35 @@ entrypoints Program ;
 Prg . Program ::=  [Expression] ;
 terminator Expression "" ;
 
-DefExprFunc. Expression ::= Func    ;
 DefUsExp   . Expression ::= "using" [QualConst] ";" ;
-TypedefExp . Expression ::= "typedef" [QualConst] Ident ";" ;
-DeclExp    . Expression ::= Arguments ";" ;
+TypedefExp . Expression ::= "typedef" [QualConst] CppIdent ";" ;
+StructExp  . Expression ::= "struct" CppIdent "{" [StructDecl] "}" ";"      ;
+DeclExp    . Expression ::= DeclStatement ";" ;
+DefExprFunc. Expression ::= Func    ;
 
-DefFunc    . Func ::=          Type Ident "(" [Arguments] ")" Body ;
-InlineFunc . Func ::= "inline" Type Ident "(" [Arguments] ")" Body ;
+DefFunc    . Func ::=          [QualConst] CppIdent "(" [Arguments] ")" Body ;
+InlineFunc . Func ::= "inline" [QualConst] CppIdent "(" [Arguments] ")" Body ;
 
 
 EmptyBody . Body ::= ";" ;
 BodyFun   . Body ::= "{" [Statement] "}" ;
 
-TypeArguments   . Arguments ::= Type ;
-DefArguments    . Arguments ::= Type Ident ;
-AffectArguments . Arguments ::= Type Ident "=" Constant;
+TypeArguments   . Arguments ::= [QualConst] ;
+DefArguments    . Arguments ::= [QualConst] CppIdent ;
+AffectArguments . Arguments ::= [QualConst] CppIdent "=" Exp;
 separator Arguments "," ;
 
 
-EmptStm     . Statement ::= ";"                                          ;
+--EmptStm     . Statement ::= ";"                                          ;
 ExpStm      . Statement ::= Exp ";"                                      ;
 BodyStm     . Statement ::= "{" [Statement] "}"                          ;
-TypedefStm  . Statement ::= "typedef" [QualConst] Ident  ";"                      ;
+DeclStm     . Statement ::= DeclStatement ";"                            ;
+TypedefStm  . Statement ::= "typedef" [QualConst] CppIdent  ";"             ;
+StructStm   . Statement ::= "struct" CppIdent "{" [StructDecl] "}" ";"      ;
 ReturnStm   . Statement ::= "return" Exp ";"                             ;
 WhileStm    . Statement ::= "while" "(" Exp ")" Statement                ;
 DoWhileStm  . Statement ::= "do" Statement "while" "(" Exp ")"  ";"      ;
-ForStm      . Statement ::= "for" "(" Exp ";" Exp ";" Exp ")" Statement  ;
+ForStm      . Statement ::= "for" "(" DeclStatement ";" Exp ";" Exp ")" Statement  ;
 IfSimpleStm . Statement ::= "if" "(" Exp ")" Statement                   ;
 IfElseStm   . Statement ::= "if" "(" Exp ")" Statement "else" Statement  ;
 SwitchStm   . Statement ::= "switch" "(" Exp ")" "{" [CaseStatement] "}" ;
@@ -37,20 +40,26 @@ terminator CaseStatement ";" ;
 BaseCaseStm    . CaseStatement ::= "case" Constant ":" Statement "break"  ;
 DefaultCaseStm . CaseStatement ::= "default"       ":" Statement "break"  ;
 
+StructElem . StructDecl ::= [QualConst] CppIdent ;
+terminator StructDecl ";" ;
+
+MultDecl   . DeclStatement ::= [QualConst] [CppIdent]        ;
+AffectDecl . DeclStatement ::= [QualConst] CppIdent "=" Exp  ;
+separator nonempty CppIdent "," ;
 
 
-ConstType . Type ::= "const" Type;
-RefType   . Type ::= Type "&";
-PointType . Type ::= Type "*";
-EmptyArTy . Type ::= Type "[]";
-TemplateTy. Type ::= Type "<" [Type] ">" ;
-separator nonempty Type "," ;
-BaseType  . Type ::= IdentType ;
-TVoid   . IdentType ::=  "void"   ; 
-TBool   . IdentType ::=  "bool"   ;
-TInt    . IdentType ::=  "int"    ;
-TDouble . IdentType ::=  "double" ;
-TPerso  . IdentType ::= Ident ;
+--RefType   . Type ::= Type "&";
+--PointType . Type ::= Type "*";
+--EmptyArTy . Type ::= Type "[]";
+--TemplateTy. Type ::= Type "<" [Type] ">" ;
+--separator nonempty Type "," ;
+ConstType . Type ::= "const" CppIdentType ;
+BaseType  . Type ::=         CppIdentType ;
+TVoid   . CppIdentType ::=  "void"   ; 
+TBool   . CppIdentType ::=  "bool"   ;
+TInt    . CppIdentType ::=  "int"    ;
+TDouble . CppIdentType ::=  "double" ;
+TPerso  . CppIdentType ::= CppIdent ;
 
 CInt    . Constant ::= [Integer] ;
 terminator nonempty Integer ""  ;
@@ -61,17 +70,20 @@ CString . Constant ::= [String] ;
 CChar   . Constant ::= Char     ;
 terminator nonempty String ""   ;
 
+--Const   . QualConst ::= "const" QualConst ;
+Array   . QualConst ::= QualConst "[]" ;
 QCPerso . QualConst ::= Type ;
---Template. QualConst ::= Type "<" Type ">" ;
+Template. QualConst ::= Type "<" [[QualConst]] ">" ;
+Point   . QualConst ::= QualConst "*" ;
+Ref     . QualConst ::= QualConst "&" ;
+separator nonempty [QualConst] "," ;
+separator nonempty QualConst "::" ;
 
 EConst  . Exp16 ::= Constant;
 
 EQualConst . Exp15 ::= [QualConst] ;
-separator nonempty QualConst "::" ;
 EIndex     . Exp15 ::= Exp15 "[" Exp "]" ;
 FunCall    . Exp15 ::= Exp15 "(" [Exp] ")" ;
-VarDeclExp . Exp15 ::= Exp15 [Ident] ;
-separator nonempty Ident "," ;
 
 EPointProj . Exp14 ::= Exp14 "." Exp15  ;
 EArrowProj . Exp14 ::= Exp14 "->" Exp15 ;
@@ -118,6 +130,9 @@ Exception    . Exp1 ::= "throw" Exp2 ;
 
 coercions Exp 16 ;
 separator Exp "," ;
+
+position token CppIdent (letter (letter | digit | '_')* );
+
 
 comment "/*" "*/" ;
 comment "//" ;
