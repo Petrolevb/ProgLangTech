@@ -3,35 +3,33 @@ entrypoints Program ;
 Prg . Program ::=  [Expression] ;
 terminator Expression "" ;
 
-DefUsExp   . Expression ::= "using" [QualConst] ";" ;
-TypedefExp . Expression ::= "typedef" TypeVar CppIdent ";" ;
-StructExp  . Expression ::= "struct" CppIdent "{" [StructDecl] "}" ";"      ;
-DeclExp    . Expression ::= DeclStatement ";" ;
-DefExprFunc. Expression ::= Func    ;
+DefUsExp   . Expression ::= "using"   [QualConst]                  ";" ;
+TypedefExp . Expression ::= "typedef" TypeVar CppIdent             ";" ;
+StructExp  . Expression ::= "struct" CppIdent "{" [StructDecl] "}" ";" ;
+DeclExp    . Expression ::= DeclStatement ";"                          ;
+DefExprFunc. Expression ::= Func                                       ;
 
 DefFunc    . Func ::=          TypeVar CppIdent "(" [Arguments] ")" Body ;
 InlineFunc . Func ::= "inline" TypeVar CppIdent "(" [Arguments] ")" Body ;
 
 QualConsType . TypeVar ::= [QualConst] ;
-NormalType   . TypeVar ::= Type ;
+NormalType   . TypeVar ::= Type        ;
 separator nonempty QualConst "::" ;
-separator nonempty TypeVar "," ;
+separator nonempty TypeVar   ","  ;
 
 EmptyBody . Body ::= ";" ;
 BodyFun   . Body ::= "{" [Statement] "}" ;
 
-TypeArguments   . Arguments ::= TypeVar ;
-DefArguments    . Arguments ::= TypeVar CppIdent ;
-AffectArguments . Arguments ::= TypeVar CppIdent "=" Exp;
+TypeArguments   . Arguments ::= TypeVar                  ;
+DefArguments    . Arguments ::= TypeVar CppIdent         ;
+AffectArguments . Arguments ::= TypeVar CppIdent "=" Exp ;
 separator Arguments "," ;
 
-
---EmptStm     . Statement ::= ""                                           ;
 ExpStm      . Statement ::= Exp ";"                                      ;
 BodyStm     . Statement ::= "{" [Statement] "}"                          ;
 DeclStm     . Statement ::= DeclStatement ";"                            ;
-TypedefStm  . Statement ::= "typedef" TypeVar CppIdent  ";"             ;
-StructStm   . Statement ::= "struct" CppIdent "{" [StructDecl] "}" ";"      ;
+TypedefStm  . Statement ::= "typedef" TypeVar CppIdent  ";"              ;
+StructStm   . Statement ::= "struct" CppIdent "{" [StructDecl] "}" ";"   ;
 ReturnStm   . Statement ::= "return" Exp ";"                             ;
 WhileStm    . Statement ::= "while" "(" Exp ")" Statement                ;
 DoWhileStm  . Statement ::= "do" Statement "while" "(" Exp ")"  ";"      ;
@@ -47,46 +45,40 @@ DefaultCaseStm . CaseStatement ::= "default"       ":" Statement "break"  ;
 StructElem . StructDecl ::= TypeVar CppIdent ;
 terminator StructDecl ";" ;
 
-MultDecl   . DeclStatement ::= TypeVar [CppIdent]        ;
-CreatDecl  . DeclStatement ::= TypeVar CppIdent "=" Exp  ;
-AffectDecl . DeclStatement ::= CppIdent "=" Exp ;
+MultDecl   . DeclStatement ::= TypeVar [CppIdent]       ;
+CreatDecl  . DeclStatement ::= TypeVar CppIdent "=" Exp ; 
+AffectDecl . DeclStatement ::=         CppIdent "=" Exp ;
 separator nonempty CppIdent "," ;
 
 
---RefType   . Type ::= Type "&";
---PointType . Type ::= Type "*";
---EmptyArTy . Type ::= Type "[]";
-SpecificTy. Type ::= Type Specifier ;
+SpecificTy. Type ::= Type Specifier         ;
 TemplateTy. Type ::= Type "<" [TypeVar] ">" ;
-ConstType . Type ::= "const" IdentType ;
-BaseType  . Type ::=         IdentType ;
-TVoid   . IdentType ::=  "void"   ; 
-TBool   . IdentType ::=  "bool"   ;
-TInt    . IdentType ::=  "int"    ;
-TDouble . IdentType ::=  "double" ;
+ConstType . Type ::= "const" IdentType      ;
+BaseType  . Type ::=         IdentType      ;
+TVoid   . IdentType ::=  "void"             ; 
+TBool   . IdentType ::=  "bool"             ;
+TInt    . IdentType ::=  "int"              ;
+TDouble . IdentType ::=  "double"           ;
 
 RefSpecifier   . Specifier ::= "&"  ;
 PointSpecifier . Specifier ::= "*"  ;
 ArraySpecifier . Specifier ::= "[]" ;
 
 CInt    . Constant ::= [Integer] ;
-terminator nonempty Integer ""  ;
-CDouble . Constant ::= Double   ;
-CFalse  . Constant ::= "false"  ;
-CTrue   . Constant ::= "true"   ;
-CString . Constant ::= [String] ;
-CChar   . Constant ::= Char     ;
-terminator nonempty String ""   ;
+CDouble . Constant ::= Double    ;
+CFalse  . Constant ::= "false"   ;
+CTrue   . Constant ::= "true"    ;
+CString . Constant ::= [String]  ;
+CChar   . Constant ::= Char      ;
+terminator nonempty Integer ""   ;
+terminator nonempty String ""    ;
 
---Array   . QualConst ::= QualConst "[]" ;
---Point   . QualConst ::= QualConst "*" ;
---Ref     . QualConst ::= QualConst "&" ;
-SpecificQC . QualConst ::= QualConst Specifier ;
-Const      . QualConst ::= "const" BaseQualConst;
-BaseQuCo   . QualConst ::=         BaseQualConst; 
-QCPerso . BaseQualConst ::= CppIdent ;
+SpecificQC . QualConst ::= QualConst Specifier   ;
+Const      . QualConst ::= "const" BaseQualConst ;
+BaseQuCo   . QualConst ::=         BaseQualConst ; 
+QCPerso . BaseQualConst ::= CppIdent                   ;
 Template. BaseQualConst ::= CppIdent "<" [TypeVar] ">" ;
---separator nonempty [QualConst] "," ;
+
 
 EConst  . Exp16 ::= Constant;
 
