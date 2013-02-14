@@ -5,8 +5,6 @@ import LexCPP
 import ParCPP
 import ErrM
 
--- Return the good thing or an error by a string
-
 -- Signature is the name of the function and list of types
 type Signature = (Id, FunType)
 type FunType   = ([Type], Type)
@@ -20,10 +18,6 @@ type Context = [(Type, Id)]
 extendVar :: Env -> Id -> Type -> Env
 extendVar (s, (gamma:stack)) id ty = (s, ((ty, id):gamma):stack)
 extendVar (s, [])            id ty = (s, ((ty, id):[]):[])
-
-extendFun :: Env -> Def -> Env 
-extendFun = undefined
-
 emptyEnv :: Signature -> Env
 emptyEnv s = (s, [])
 

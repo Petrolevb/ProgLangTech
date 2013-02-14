@@ -1,5 +1,7 @@
 module TypeChecker where
 
+import BuildEnv
+
 import Context
 
 import AbsCPP
@@ -24,41 +26,135 @@ typeResult :: Bool -> Err ()
 typeResult False = Bad "Error on type checking"
 typeResult True  = Ok ()
 
-buildEnvOnDef :: Def -> Env
-buildEnvOnDef fun = buildEnvFromStatements (emptyEnv funSig) stms
-    where  (funSig, stms) = funToSign fun
-
-buildEnvFromStatements :: Env -> [Stm] -> Env
-buildEnvFromStatements e ((SExp    exp)          :s) = buildEnvFromStatements e s
-buildEnvFromStatements e ((SDecls  typ ids)      :s) = buildEnvFromStatements e s
-buildEnvFromStatements e ((SInit   typ id expVal):s) = buildEnvFromStatements e s
-buildEnvFromStatements e ((SReturn exp)          :s) = buildEnvFromStatements e s
-buildEnvFromStatements e ((SWhile  exp stm)      :s) = buildEnvFromStatements e s
-buildEnvFromStatements e ((SBlock  stms)         :s) = buildEnvFromStatements e s
-buildEnvFromStatements e ((SIfElse exp stmI stmE):s) = buildEnvFromStatements e s
-buildEnvFromStatements e []      = e
 
 checkDef :: Env -> Def -> Bool
 checkDef = undefined
 
 -- infer type of exp
 infer :: Env -> Exp -> Err Type
-infer = undefined
+infer gamma e = Bad "not in environment"
 
 -- Check type of exp
 checkExp :: Env -> Exp -> Type -> Err ()
-checkExp gamma e t = Ok ()
+checkExp gamma  ETrue           Type_bool   = Ok ()
+checkExp gamma  EFalse          Type_bool   = Ok ()
+checkExp gamma (EInt    i     ) Type_int    = Ok ()
+checkExp gamma (EDouble d     ) Type_double = Ok ()
+checkExp gamma (EId    id     ) t = do
+    tId <- infer gamma (EId id)
+    typeResult (tId == t)
+checkExp gamma (EApp   app exp) t = Ok ()
+checkExp gamma (EPIncr e      ) t = checkExp gamma e t
+checkExp gamma (EPDecr e      ) t = checkExp gamma e t
+checkExp gamma (ETimes e1  e2)  t = do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1
+    typeResult (te1 == t)
+checkExp gamma (EDiv   e1  e2)  t = do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1
+    typeResult (te1 == t)
+checkExp gamma (EPlus  e1  e2)  t = do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1
+    typeResult (te1 == t)
+checkExp gamma (EMinus e1  e2)  t = do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1
+    typeResult (te1 == t)
+checkExp gamma (ELt    e1  e2)  Type_bool = do
+    te1 <- infer gamma e1
+    typeResult (te1 `elem` [Type_int, Type_double])
+    checkExp gamma e2 te1
+checkExp gamma (EGt    e1  e2)  Type_bool = do
+    te1 <- infer gamma e1
+    typeResult (te1 `elem` [Type_int, Type_double])
+    checkExp gamma e2 te1
+checkExp gamma (ELtEq  e1  e2)  Type_bool = do
+    te1 <- infer gamma e1
+    typeResult (te1 `elem` [Type_int, Type_double])
+    checkExp gamma e2 te1
+checkExp gamma (EGtWq  e1  e2)  Type_bool = do
+    te1 <- infer gamma e1
+    typeResult (te1 `elem` [Type_int, Type_double])
+    checkExp gamma e2 te1
+checkExp gamma (EEq    e1  e2)  Type_bool = do
+    t1 <- infer gamma e1
+    t2 <- infer gamma e2
+    typeResult (t1 == t2)
+checkExp gamma (ENEq   e1  e2)  Type_bool = do 
+    t1 <- infer gamma e1
+    t2 <- infer gamma e2
+    typeResult (t1 == t2)
+checkExp gamma (EAnd   e1  e2)  Type_bool = do
+    checkExp gamma e1 Type_bool
+    checkExp gamma e2 Type_bool
+checkExp gamma (EOr    e1  e2)  Type_bool = do
+    checkExp gamma e1 Type_bool
+    checkExp gamma e2 Type_bool
+checkExp gamma (EAss   e1  e2)  t =  do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1 -- e2 has to be the type of e1
+    typeResult (te1 == t)
+checkExp _ _ _ = typeResult False
 
 -- check sequence of statetments
 checkStm :: Env -> Stm -> Err ()
-checkStm gamma stm = Ok ()
+checkStm gamma (SExp e) = undefined
+    -- infer gamma e
+checkStm gamma (SDecls t ids) = undefined
+    -- add t ids in gamma ?
+checkStm gamma (SInit t i e) = do
+    checkExp gamma e t
+    -- add t i in gamma ?
+checkStm gamma (SReturn e) = do
+    Ok ()
+checkStm gamma (SWhile e s) = do
+    checkExp gamma e Type_bool
+    checkStm gamma s
+checkStm gamma (SBlock stms) = 
+-- build the new environment and check the statement of the block
+    checkStms 
+        (buildEnvFromStatements gamma stms)
+        stms 
+checkStm gamma (SIfElse e s1 s2) = do
+    checkExp gamma e Type_bool
+    checkStm gamma s1
+    checkStm gamma s2
+checkStm _ _ = typeResult False
+
+checkStms :: Env -> [Stm] -> Err ()
+checkStms gamma (s:[]) = checkStm gamma s
+checkStms gamma (s:ss) = do
+    checkStm gamma s
+    checkStms gamma ss
 
 -- check function definition
 checkFun :: Env -> Def -> Err ()
-checkFun gamma fun = Ok ()
+checkFun gamma fun = do         -- check fun
+    checkStms                   -- check the statements 
+        (buildEnvFromStatements envFun (bodyFun fun))
+        (bodyFun fun)           -- of the body of this function
+                                -- after building the env from the 
+                                -- signature and then from the body
+    where envFun = (extendFun gamma fun)
+          bodyFun (DFun _ _ _ body) = body
 
 -- Check a whole program
 check :: Program -> Err ()
 check prog = Ok ()
 
 
+-- Return the maxType between two type
+-- void < bool < int < double < string
+maxType :: Type -> Type -> Err Type
+maxType Type_void _ = Bad "bad type comparison"
+maxType Type_bool _ = Bad "bad type comparison"
+maxType _ Type_void = Bad "bad type comparison"
+maxType _ Type_bool = Bad "bad type comparison"
+maxType Type_int a = Ok a
+maxType _        Type_double = Ok Type_double
+
+
+newFunc :: Stm -> Def
+newFunc s = DFun Type_int (Id "main") [] [s]
