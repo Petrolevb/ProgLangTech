@@ -20,11 +20,13 @@ buildEnvFromStatement e (SDecls  typ ids)       = newenv
           extendVars e (id:ids) typ = extendVars (extendVar e id typ) ids typ
 buildEnvFromStatement e (SInit   typ id expVal) = newenv
     where newenv = extendVar e id typ
-buildEnvFromStatement e (SReturn exp)           = e
-buildEnvFromStatement e (SWhile  exp stm)       = e
+buildEnvFromStatement e (SReturn exp)           = buildEnvFromExp e exp
+buildEnvFromStatement e (SWhile  exp stm)       = 
+    buildEnvFromStatement (buildEnvFromExp e exp) stm
 -- With a block of statements, a new env is built later, when the typechecker reach this block
-buildEnvFromStatement e (SBlock  stms)          = e
-buildEnvFromStatement e (SIfElse exp stmI stmE) = e
+buildEnvFromStatement e (SBlock  stms)          = newBlock e
+buildEnvFromStatement e (SIfElse exp stmI stmE) = 
+    buildEnvFromExp e exp
 
 -- Update an env from an expression
 buildEnvFromExp :: Env -> Exp -> Env

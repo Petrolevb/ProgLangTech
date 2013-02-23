@@ -4,7 +4,7 @@ import AbsCPP
 import PrintCPP
 import ErrM
 
-import Monad
+--import Data.Monad
 import qualified Data.Map as M
 
 interpret :: Program -> IO ()

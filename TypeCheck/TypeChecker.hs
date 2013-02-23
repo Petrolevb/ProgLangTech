@@ -58,9 +58,6 @@ checkStm gamma (SIfElse e s1 s2) = do
     checkStm gamma s2
 --checkStm _ _ = typeResult False
 
--- infer type of exp
-infer :: Env -> Exp -> Err Type
-infer gamma e = Bad "not in environment"
 
 -- Check type of exp
 checkExp :: Env -> Exp -> Type -> Err ()
@@ -125,3 +122,44 @@ maxType _        Type_double = Ok Type_double
 
 newFunc :: Stm -> Def
 newFunc s = DFun Type_int (Id "main") [] [s]
+
+-- infer type of exp
+infer :: Env -> Exp -> Err Type
+infer gamma (ETrue)        = Ok Type_bool
+infer gamma (EFalse)       = Ok Type_bool
+infer gamma (EInt _)       = Ok Type_int
+infer gamma (EDouble _)    = Ok Type_double
+infer gamma (EId id)       = lookupVar id gamma
+infer gamma (EApp id exps) = Bad "EApp not implemented"
+
+infer gamma (EIncr e)      = do
+    te <- infer gamma e
+    maxType Type_double te
+infer gamma (EPIncr e)     = infer gamma (EIncr e)
+infer gamma (EPDecr e)     = infer gamma (EIncr e)
+infer gamma (EDecr e)      = infer gamma (EIncr e)
+
+infer gamma (EPlus e1 e2)  = do
+    te1 <- infer gamma e1
+    te2 <- infer gamma e2
+    maxType te1 te2
+infer gamma (ETimes e1 e2) = infer gamma (EPlus e1 e2)
+infer gamma (EDiv e1 e2)   = infer gamma (EPlus e1 e2)
+infer gamma (EMinus e1 e2) = infer gamma (EPlus e1 e2)
+
+infer gamma (ELt e1 e2)    = do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1
+    return Type_bool 
+infer gamma (EGt e1 e2)    = infer gamma (ELt e1 e2)
+infer gamma (ELtEq e1 e2)  = infer gamma (ELt e1 e2)
+infer gamma (EGtWq e1 e2)  = infer gamma (ELt e1 e2)
+infer gamma (ENEq e1 e2)   = infer gamma (ELt e1 e2)
+infer gamma (EEq e1 e2)    = infer gamma (ELt e1 e2)
+
+infer gamma (EAnd e1 e2)   = do
+    checkExp gamma e1 Type_bool
+    checkExp gamma e2 Type_bool
+    return Type_bool
+infer gamma (EOr e1 e2)    = infer gamma (EAnd e1 e2)
+infer gamma (EAss e1 e2)   = Bad "EAss not implemented"

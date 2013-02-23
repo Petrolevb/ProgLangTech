@@ -1,0 +1,4 @@
+*.o
+*.hi
+DocCPP.t*
+lab2
