@@ -102,9 +102,9 @@ checkExp gamma (EPDecr e      ) t = checkExp gamma e t
 
 checkExp gamma (ETimes e1  e2)  t = do
     te1 <- infer gamma e1
-    te2 <- infer gamma e2 
-    tfin <- (maxType te1 te2)
-    typeResult (tfin == t)
+    checkExp gamma e2 te1
+    typeResult (te1 `elem` [Type_double, Type_int])
+    typeResult (te1 == t)
 checkExp gamma (EDiv   e1  e2)  t = checkExp gamma (ETimes e1 e2) t
 checkExp gamma (EPlus  e1  e2)  t = checkExp gamma (ETimes e1 e2) t
 checkExp gamma (EMinus e1  e2)  t = checkExp gamma (ETimes e2 e2) t
@@ -140,18 +140,6 @@ checkExp gamma (EAss   e1  e2)  t =  do
 
 checkExp _ _ _ = typeResult False
 
-
--- Return the maxType between two type
--- void < bool < int < double < string
-maxType :: Type -> Type -> Err Type
-maxType Type_void _ = Bad "bad type comparison"
-maxType Type_bool _ = Bad "bad type comparison"
-maxType _ Type_void = Bad "bad type comparison"
-maxType _ Type_bool = Bad "bad type comparison"
-maxType Type_int a = Ok a
-maxType _        Type_double = Ok Type_double
-
-
 newFunc :: Stm -> Def
 newFunc s = DFun Type_int (Id "main") [] [s]
 
@@ -162,19 +150,24 @@ infer gamma (EFalse)       = Ok Type_bool
 infer gamma (EInt _)       = Ok Type_int
 infer gamma (EDouble _)    = Ok Type_double
 infer gamma (EId id)       = lookupVar id gamma
-infer gamma (EApp id exps) = Bad "EApp not implemented"
+infer gamma (EApp id exps) = do 
+--Bad "EApp not implemented yet"
+    (_, typeFun) <- lookupFun id gamma
+    return typeFun
 
 infer gamma (EIncr e)      = do
     te <- infer gamma e
-    maxType Type_double te
+    typeResult (te == Type_int)
+    Ok Type_int
 infer gamma (EPIncr e)     = infer gamma (EIncr e)
 infer gamma (EPDecr e)     = infer gamma (EIncr e)
 infer gamma (EDecr e)      = infer gamma (EIncr e)
 
 infer gamma (EPlus e1 e2)  = do
     te1 <- infer gamma e1
-    te2 <- infer gamma e2
-    maxType te1 te2
+    checkExp gamma e2 te1
+    typeResult (te1 `elem` [Type_double, Type_int])
+    Ok te1
 infer gamma (ETimes e1 e2) = infer gamma (EPlus e1 e2)
 infer gamma (EDiv e1 e2)   = infer gamma (EPlus e1 e2)
 infer gamma (EMinus e1 e2) = infer gamma (EPlus e1 e2)
@@ -194,4 +187,7 @@ infer gamma (EAnd e1 e2)   = do
     checkExp gamma e2 Type_bool
     return Type_bool
 infer gamma (EOr e1 e2)    = infer gamma (EAnd e1 e2)
-infer gamma (EAss e1 e2)   = Bad "EAss not implemented"
+infer gamma (EAss e1 e2)   = do
+    te1 <- infer gamma e1
+    checkExp gamma e2 te1
+    return te1
