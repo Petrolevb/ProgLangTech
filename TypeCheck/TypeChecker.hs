@@ -47,11 +47,14 @@ checkStm :: Env -> Stm -> Err ()
 checkStm gamma (SExp e) = do
     infer gamma e -- if we can get the type, it's ok
     Ok ()
-checkStm gamma (SDecls t ids) = undefined
-    -- add t ids in gamma ?
+checkStm gamma (SDecls t ids) = 
+    Ok ()
+    -- all variables already added and checked
+    -- nothing to do
+
 checkStm gamma (SInit t i e) = do
     checkExp gamma e t
-    -- add t i in gamma ?
+
 checkStm gamma (SReturn e) =  do
     treturn <- infer gamma e
     tFun <- getFunType gamma
