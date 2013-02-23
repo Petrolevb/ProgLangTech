@@ -9,14 +9,20 @@ import PrintCPP
 import ErrM
 
 typecheck :: Program -> Err ()
-typecheck p = checkDefs $ fromProg p 
-    where fromProg (PDefs defs) = defs
+typecheck p = checkDefs (getSignatures p) (fromProg p)
+    where fromProg (PDefs defs)      = defs
+          getSignatures (PDefs defs) =
+            [ sig | (sig, _) <- map funToSign defs ]
 
-checkDefs :: [Def] -> Err () 
-checkDefs (def:[]) = checkDef (buildEnvOnDef def) def
-checkDefs (def:ds) = do
-    checkDef (buildEnvOnDef def) def 
-    checkDefs ds
+-- Take the list of all signatures of all functions
+-- Take the list of definitions
+-- Typecheck all definitions
+checkDefs ::  [Signature] -> [Def] -> Err () 
+checkDefs signs (def:[]) = 
+    checkDef (buildEnvOnDef def signs) def
+checkDefs signs (def:ds) = do
+    checkDef (buildEnvOnDef def signs) def 
+    checkDefs signs ds
 
 typeResult :: Bool -> Err ()
 typeResult False = Bad "Error on type checking"
@@ -28,23 +34,28 @@ checkDef :: Env -> Def -> Err ()
 checkDef env (DFun _ _ _ body) = checkStms env body
 
 checkStms :: Env -> [Stm] -> Err ()
-checkStms gamma (s:[]) = checkStm (buildEnvFromStatement gamma s) s
+checkStms gamma (s:[]) = do
+    newEnv <- buildEnvFromStatement gamma s
+    checkStm newEnv s
 checkStms gamma (s:ss) = do
-    let newGamma = buildEnvFromStatement gamma s
+    newGamma <- buildEnvFromStatement gamma s
     checkStm newGamma s
     checkStms newGamma ss
 
 -- check sequence of statetments
 checkStm :: Env -> Stm -> Err ()
-checkStm gamma (SExp e) = undefined
-    -- infer gamma e
+checkStm gamma (SExp e) = do
+    infer gamma e -- if we can get the type, it's ok
+    Ok ()
 checkStm gamma (SDecls t ids) = undefined
     -- add t ids in gamma ?
 checkStm gamma (SInit t i e) = do
     checkExp gamma e t
     -- add t i in gamma ?
 checkStm gamma (SReturn e) =  do
-    Ok ()
+    treturn <- infer gamma e
+    tFun <- getFunType gamma
+    typeResult (tFun == treturn)
 checkStm gamma (SWhile e s) = do
     checkExp gamma e Type_bool
     checkStm gamma s
@@ -68,14 +79,33 @@ checkExp gamma (EDouble d     ) Type_double = Ok ()
 checkExp gamma (EId    id     ) t = do
     tId <- infer gamma (EId id)
     typeResult (tId == t)
-checkExp gamma (EApp   app exp) t = Ok ()
+
+checkExp gamma (EApp   id exp) t = undefined
+{-do
+    (tysids, typeFun) <- lookupFun id gamma
+    -- Function return same type as requested
+    typeResult (t == typeFun)
+    -- Same number of argument as requested
+    typeResult ((length exp) == (length tysids))
+    checkAllArgs tysids exp
+        where 
+            checkAllArgs [(ty, _)] [exp] = 
+                checkExp gamma exp ty
+            checkAllArgs ((ty,_):tysids) (exp:exps) = do
+                checkExp gamma exp ty
+                checkAllArgs tysids exps
+ -}
 checkExp gamma (EPIncr e      ) t = checkExp gamma e t
 checkExp gamma (EPDecr e      ) t = checkExp gamma e t
 
-checkExp gamma (ETimes e1  e2)  t = checkExp gamma (EAss e1 e2) t
-checkExp gamma (EDiv   e1  e2)  t = checkExp gamma (EAss e1 e2) t
-checkExp gamma (EPlus  e1  e2)  t = checkExp gamma (EAss e1 e2) t
-checkExp gamma (EMinus e1  e2)  t = checkExp gamma (EAss e2 e2) t
+checkExp gamma (ETimes e1  e2)  t = do
+    te1 <- infer gamma e1
+    te2 <- infer gamma e2 
+    tfin <- (maxType te1 te2)
+    typeResult (tfin == t)
+checkExp gamma (EDiv   e1  e2)  t = checkExp gamma (ETimes e1 e2) t
+checkExp gamma (EPlus  e1  e2)  t = checkExp gamma (ETimes e1 e2) t
+checkExp gamma (EMinus e1  e2)  t = checkExp gamma (ETimes e2 e2) t
 
 checkExp gamma (ELt    e1  e2)  Type_bool = 
     checkExp gamma (EGtWq e1 e2) Type_bool
