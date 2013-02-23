@@ -8,27 +8,55 @@ import AbsCPP
 import PrintCPP
 import ErrM
 
-{-
-	- Has to work in two passes
-	- the first "build" the database of context
-	- the second check and anotate the code
--}
 typecheck :: Program -> Err ()
-typecheck p = typeResult $ and $ 
-                [ checkDef env def | 
-                    (env, def) <- zip 
-                                (map buildEnvOnDef (fromProg p)) 
-                                (fromProg p) 
-                ]
+typecheck p = checkDefs $ fromProg p 
     where fromProg (PDefs defs) = defs
+
+checkDefs :: [Def] -> Err () 
+checkDefs (def:[]) = checkDef (buildEnvOnDef def) def
+checkDefs (def:ds) = do
+    checkDef (buildEnvOnDef def) def 
+    checkDefs ds
 
 typeResult :: Bool -> Err ()
 typeResult False = Bad "Error on type checking"
 typeResult True  = Ok ()
 
 
-checkDef :: Env -> Def -> Bool
-checkDef = undefined
+-- empty env with the function signature
+checkDef :: Env -> Def -> Err ()
+checkDef env (DFun _ _ _ body) = checkStms env body
+
+checkStms :: Env -> [Stm] -> Err ()
+checkStms gamma (s:[]) = checkStm (buildEnvFromStatement gamma s) s
+checkStms gamma (s:ss) = do
+    let newGamma = buildEnvFromStatement gamma s
+    checkStm newGamma s
+    checkStms newGamma ss
+
+-- check sequence of statetments
+checkStm :: Env -> Stm -> Err ()
+checkStm gamma (SExp e) = undefined
+    -- infer gamma e
+checkStm gamma (SDecls t ids) = undefined
+    -- add t ids in gamma ?
+checkStm gamma (SInit t i e) = do
+    checkExp gamma e t
+    -- add t i in gamma ?
+checkStm gamma (SReturn e) =  do
+    Ok ()
+checkStm gamma (SWhile e s) = do
+    checkExp gamma e Type_bool
+    checkStm gamma s
+checkStm gamma (SBlock stms) = do
+    -- add a new context on the stack
+    let newGamma = newBlock gamma
+    checkStms newGamma stms
+checkStm gamma (SIfElse e s1 s2) = do
+    checkExp gamma e Type_bool
+    checkStm gamma s1
+    checkStm gamma s2
+--checkStm _ _ = typeResult False
 
 -- infer type of exp
 infer :: Env -> Exp -> Err Type
@@ -46,103 +74,42 @@ checkExp gamma (EId    id     ) t = do
 checkExp gamma (EApp   app exp) t = Ok ()
 checkExp gamma (EPIncr e      ) t = checkExp gamma e t
 checkExp gamma (EPDecr e      ) t = checkExp gamma e t
-checkExp gamma (ETimes e1  e2)  t = do
-    te1 <- infer gamma e1
-    checkExp gamma e2 te1
-    typeResult (te1 == t)
-checkExp gamma (EDiv   e1  e2)  t = do
-    te1 <- infer gamma e1
-    checkExp gamma e2 te1
-    typeResult (te1 == t)
-checkExp gamma (EPlus  e1  e2)  t = do
-    te1 <- infer gamma e1
-    checkExp gamma e2 te1
-    typeResult (te1 == t)
-checkExp gamma (EMinus e1  e2)  t = do
-    te1 <- infer gamma e1
-    checkExp gamma e2 te1
-    typeResult (te1 == t)
-checkExp gamma (ELt    e1  e2)  Type_bool = do
-    te1 <- infer gamma e1
-    typeResult (te1 `elem` [Type_int, Type_double])
-    checkExp gamma e2 te1
-checkExp gamma (EGt    e1  e2)  Type_bool = do
-    te1 <- infer gamma e1
-    typeResult (te1 `elem` [Type_int, Type_double])
-    checkExp gamma e2 te1
-checkExp gamma (ELtEq  e1  e2)  Type_bool = do
-    te1 <- infer gamma e1
-    typeResult (te1 `elem` [Type_int, Type_double])
-    checkExp gamma e2 te1
+
+checkExp gamma (ETimes e1  e2)  t = checkExp gamma (EAss e1 e2) t
+checkExp gamma (EDiv   e1  e2)  t = checkExp gamma (EAss e1 e2) t
+checkExp gamma (EPlus  e1  e2)  t = checkExp gamma (EAss e1 e2) t
+checkExp gamma (EMinus e1  e2)  t = checkExp gamma (EAss e2 e2) t
+
+checkExp gamma (ELt    e1  e2)  Type_bool = 
+    checkExp gamma (EGtWq e1 e2) Type_bool
+checkExp gamma (EGt    e1  e2)  Type_bool = 
+    checkExp gamma (EGtWq e1 e2) Type_bool
+checkExp gamma (ELtEq  e1  e2)  Type_bool = 
+    checkExp gamma (EGtWq e1 e2) Type_bool
 checkExp gamma (EGtWq  e1  e2)  Type_bool = do
     te1 <- infer gamma e1
     typeResult (te1 `elem` [Type_int, Type_double])
     checkExp gamma e2 te1
-checkExp gamma (EEq    e1  e2)  Type_bool = do
-    t1 <- infer gamma e1
-    t2 <- infer gamma e2
-    typeResult (t1 == t2)
+
+checkExp gamma (EEq    e1  e2)  Type_bool = 
+    checkExp gamma (ENEq e1 e2) Type_bool
 checkExp gamma (ENEq   e1  e2)  Type_bool = do 
     t1 <- infer gamma e1
     t2 <- infer gamma e2
     typeResult (t1 == t2)
-checkExp gamma (EAnd   e1  e2)  Type_bool = do
-    checkExp gamma e1 Type_bool
-    checkExp gamma e2 Type_bool
+
+checkExp gamma (EAnd   e1  e2)  Type_bool = 
+    checkExp gamma (EOr e1 e2) Type_bool
 checkExp gamma (EOr    e1  e2)  Type_bool = do
     checkExp gamma e1 Type_bool
     checkExp gamma e2 Type_bool
+
 checkExp gamma (EAss   e1  e2)  t =  do
     te1 <- infer gamma e1
     checkExp gamma e2 te1 -- e2 has to be the type of e1
     typeResult (te1 == t)
+
 checkExp _ _ _ = typeResult False
-
--- check sequence of statetments
-checkStm :: Env -> Stm -> Err ()
-checkStm gamma (SExp e) = undefined
-    -- infer gamma e
-checkStm gamma (SDecls t ids) = undefined
-    -- add t ids in gamma ?
-checkStm gamma (SInit t i e) = do
-    checkExp gamma e t
-    -- add t i in gamma ?
-checkStm gamma (SReturn e) = do
-    Ok ()
-checkStm gamma (SWhile e s) = do
-    checkExp gamma e Type_bool
-    checkStm gamma s
-checkStm gamma (SBlock stms) = 
--- build the new environment and check the statement of the block
-    checkStms 
-        (buildEnvFromStatements gamma stms)
-        stms 
-checkStm gamma (SIfElse e s1 s2) = do
-    checkExp gamma e Type_bool
-    checkStm gamma s1
-    checkStm gamma s2
-checkStm _ _ = typeResult False
-
-checkStms :: Env -> [Stm] -> Err ()
-checkStms gamma (s:[]) = checkStm gamma s
-checkStms gamma (s:ss) = do
-    checkStm gamma s
-    checkStms gamma ss
-
--- check function definition
-checkFun :: Env -> Def -> Err ()
-checkFun gamma fun = do         -- check fun
-    checkStms                   -- check the statements 
-        (buildEnvFromStatements envFun (bodyFun fun))
-        (bodyFun fun)           -- of the body of this function
-                                -- after building the env from the 
-                                -- signature and then from the body
-    where envFun = (extendFun gamma fun)
-          bodyFun (DFun _ _ _ body) = body
-
--- Check a whole program
-check :: Program -> Err ()
-check prog = Ok ()
 
 
 -- Return the maxType between two type
