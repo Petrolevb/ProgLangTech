@@ -37,7 +37,7 @@ buildEnvFromStatement e (SWhile  exp stm)       = do
     buildEnvFromStatement newEnv stm
 -- With a block of statements, a new env is built later, 
 -- when the typechecker reach this block
-buildEnvFromStatement e (SBlock  stms)          = return $ newBlock e
+buildEnvFromStatement e (SBlock  stms)          = return e
 buildEnvFromStatement e (SIfElse exp stmI stmE) = return e
 
 -- Update an env from an expression

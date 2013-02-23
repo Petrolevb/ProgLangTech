@@ -15,8 +15,9 @@ type Context = [(Type, Id)]
 
 
 extendVar :: Env -> Id -> Type -> Err Env
-extendVar (s, gamma:stack, sigs)   id ty = 
-    case (lookupVar id (s, gamma:stack, sigs)) of
+extendVar (s, gamma:stack, sigs)   id ty =
+    -- Take care to not look inside the stack !
+    case (lookupVar id (s, [gamma], sigs)) of
         Bad _ -> Ok (s, ((ty, id):gamma):stack, sigs) -- not found, so ok
         Ok  _ -> Bad "Variable already exist"
 extendVar (s, [], sigs) id ty = 
@@ -29,7 +30,6 @@ emptyEnv s = (s, [], [])
 
 newBlock :: Env -> Env
 newBlock (s, c, ss) = (s, []:c, ss)
-
 
 funToSign :: Def -> (Signature, [Stm])
 funToSign (DFun typeFun name args stms) = ((name, (fromArgs args, typeFun)), stms)
