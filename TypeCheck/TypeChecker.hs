@@ -80,8 +80,7 @@ checkExp gamma (EId    id     ) t = do
     tId <- infer gamma (EId id)
     typeResult (tId == t)
 
-checkExp gamma (EApp   id exp) t = undefined
-{-do
+checkExp gamma (EApp   id exp) t = do
     (tysids, typeFun) <- lookupFun id gamma
     -- Function return same type as requested
     typeResult (t == typeFun)
@@ -94,7 +93,7 @@ checkExp gamma (EApp   id exp) t = undefined
             checkAllArgs ((ty,_):tysids) (exp:exps) = do
                 checkExp gamma exp ty
                 checkAllArgs tysids exps
- -}
+ 
 checkExp gamma (EPIncr e      ) t = checkExp gamma e t
 checkExp gamma (EPDecr e      ) t = checkExp gamma e t
 
