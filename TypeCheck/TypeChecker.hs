@@ -151,7 +151,6 @@ infer gamma (EInt _)       = Ok Type_int
 infer gamma (EDouble _)    = Ok Type_double
 infer gamma (EId id)       = lookupVar id gamma
 infer gamma (EApp id exps) = do 
---Bad "EApp not implemented yet"
     (_, typeFun) <- lookupFun id gamma
     return typeFun
 

@@ -8,10 +8,18 @@ import ErrM
 
 -- Create an env with a function
 buildEnvOnDef :: Def -> [Signature] -> Env
-buildEnvOnDef fun signs = addListSigns (emptyEnv signature) signs
+buildEnvOnDef fun signs = addIOFun $ addListSigns (emptyEnv signature) signs
     where 
           (signature, _) = funToSign fun
           addListSigns (s, c, ss) ss2 = (s, c, ss++ss2)
+addIOFun :: Env -> Env
+addIOFun env = extendFun (extendFun env readInt) printInt 
+
+readInt :: Def
+readInt  = (DFun Type_int  (Id "readInt")  [] [])
+printInt :: Def
+printInt = (DFun Type_void (Id "printInt") [(ADecl Type_int (Id "arg"))] [])
+
 
 -- Update an env from a block of statement
 buildEnvFromStatement :: Env -> Stm -> Err Env
