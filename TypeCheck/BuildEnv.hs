@@ -13,12 +13,22 @@ buildEnvOnDef fun signs = addIOFun $ addListSigns (emptyEnv signature) signs
           (signature, _) = funToSign fun
           addListSigns (s, c, ss) ss2 = (s, c, ss++ss2)
 addIOFun :: Env -> Env
-addIOFun env = extendFun (extendFun env readInt) printInt 
+addIOFun env = extendFun 
+                (extendFun 
+                    (extendFun 
+                        (extendFun env readInt) 
+                        printInt)
+                    readDouble)
+                printDouble
 
 readInt :: Def
 readInt  = (DFun Type_int  (Id "readInt")  [] [])
 printInt :: Def
 printInt = (DFun Type_void (Id "printInt") [(ADecl Type_int (Id "arg"))] [])
+readDouble :: Def
+readDouble  = (DFun Type_double  (Id "readDouble")  [] [])
+printDouble :: Def
+printDouble = (DFun Type_void (Id "printDouble") [(ADecl Type_double (Id "arg"))] [])
 
 
 -- Update an env from a block of statement

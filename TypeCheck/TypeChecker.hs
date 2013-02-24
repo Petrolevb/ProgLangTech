@@ -34,6 +34,7 @@ checkDef :: Env -> Def -> Err ()
 checkDef env (DFun _ _ _ body) = checkStms env body
 
 checkStms :: Env -> [Stm] -> Err ()
+checkStms _ [] = Ok () -- nothing to do in an empty block statement
 checkStms gamma (s:[]) = do
     newEnv <- buildEnvFromStatement gamma s
     checkStm newEnv s
@@ -66,6 +67,7 @@ checkStm gamma (SBlock stms) = do
     -- add a new context on the stack
     let newGamma = newBlock gamma
     checkStms newGamma stms
+
 checkStm gamma (SIfElse e s1 s2) = do
     checkExp gamma e Type_bool
     checkStm gamma s1
@@ -90,7 +92,8 @@ checkExp gamma (EApp   id exp) t = do
     -- Same number of argument as requested
     typeResult ((length exp) == (length tysids))
     checkAllArgs tysids exp
-        where 
+        where
+            checkAllArgs [] [] = Ok ()
             checkAllArgs [(ty, _)] [exp] = 
                 checkExp gamma exp ty
             checkAllArgs ((ty,_):tysids) (exp:exps) = do
