@@ -1,3 +1,4 @@
+{-# OPTIONS -XTypeSynonymInstances -XFlexibleInstances #-}
 module Interpreter where
 
 import AbsCPP
@@ -14,19 +15,29 @@ import Control.Monad.State
 
 type PrintProg a = StateT Env IO a
 
---instance Show a => Show (PrintProg a) where 
---    show (StateT f) = show.f
+-- to try, with execStateT
+errorF :: PrintProg ()
+errorF = evalFun (Id "test") [] 
+            (createEnv (PDefs [(DFun Type_int (Id "main") [] [])]))
+-- for interpret            
+errorProg :: Program
+errorProg = PDefs [(DFun Type_int (Id "test") [] [])]
 
+interpret :: Program -> IO ()
+interpret p = do
+    execStateT (evalFun (Id "main") [] (createEnv p)) emptyEnv
+    putStr ""
 
-interpret :: Program -> PrintProg ()
-interpret p = evalFun (Id "main") [] (createEnv p)
 
 evalFun :: Id -> [Var] -> Env -> PrintProg ()
 evalFun id args env = do
     put env
     case getBody id env of
         Right err -> liftIO $ putStrLn err
-        Left (fun, funArg)  -> evalDef (addArgs env funArg args) fun
+        Left (fun, funArg)  -> do 
+            defEnv <- get 
+            put $ addArgs defEnv funArg args
+            evalDef fun
 
 
 getBody :: Id -> Env -> Either ([Stm], [Var])  String
@@ -36,35 +47,51 @@ getBody id (context, (idFun, body, args):funContext)
    | otherwise   = getBody id (context, funContext)
 
 
-evalDef :: Env -> [Stm] -> PrintProg ()
-evalDef env stms = do
-    evalStatements env stms
+evalDef :: [Stm] -> PrintProg ()
+evalDef stms = do
+    returnValue <- evalStatements stms
     return ()
 
 
-evalStatements :: Env -> [Stm] -> PrintProg ()
-evalStatements env [stm] = evalStatement env stm
-evalStatements env (stm:stms) = do
-    evalStatement env stm
-    evalStatements env stms
+evalStatements :: [Stm] -> PrintProg Value
+evalStatements [stm] = evalStatement stm
+evalStatements (stm:stms) = do
+    evalStatement stm
+    evalStatements stms
 
-evalStatement :: Env -> Stm -> PrintProg ()
-evalStatement env (SExp exp) = do
-    evalExp exp
-    return ()
-evalStatement env (SDecls ty ids) = undefined
-evalStatement env (SInit ty id exp) = do
+evalStatement :: Stm -> PrintProg Value
+evalStatement (SExp exp) = evalExp exp
+evalStatement (SDecls ty ids) = do
+    env <- get
+    put $ addIds ids env
+    return VNul
+        where 
+            addIds [id] env = addVar env (id, VNul)
+            addIds (id:ids) env = addVar (addIds ids env) (id, VNul)
+evalStatement (SInit ty id exp) = do
     value <- evalExp exp
-    let newEnv = addVar env (id, value)
-    return ()
-evalStatement env (SReturn exp) = undefined
-evalStatement env (SWhile exp stm) = undefined
-evalStatement env (SBlock stms)    = undefined
-evalStatement env (SIfElse e stm stm2) = do
+    env <- get
+    put $ addVar env (id, value)
+    return VNul
+evalStatement (SReturn exp) = do
+    evalExp exp
+evalStatement (SWhile exp stm) = do
+    (VBool val) <- evalExp exp
+    if val
+        then evalStatement stm
+        else return VNul
+evalStatement (SBlock stms)    = do
+            env <- get
+            put $ addNewBlock env
+            evalStatements stms
+            aft <- get
+            put $ removeBlock aft
+            return VNul
+evalStatement (SIfElse e stm stm2) = do
     ifExp <- evalExp e
     if ifExp == VBool True
-        then evalStatement env stm 
-        else evalStatement env stm2
+        then evalStatement stm 
+        else evalStatement stm2
 
 
 -- 0 for false, 1 for true, Nothing for void

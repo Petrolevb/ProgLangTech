@@ -60,9 +60,28 @@ getTopContext (c:_) = c
 
 addNewBlock :: Env -> Env
 addNewBlock (context, funContext) = ([]:context, funContext)
+removeBlock :: Env -> Env
+removeBlock (c:context, funContext) = (context, funContext)
 
 getVal :: Env -> Id -> Value
-getVal = undefined
+getVal (context, _) = getInContexts context
+
+getInContexts ::  [ValContext]-> Id -> Value
+getInContexts [vars] id = 
+    case getInContext vars id of
+        Nothing -> undefined -- Theorically impossible
+        Just val -> val
+getInContexts (vars:context) id = 
+    case getInContext vars id of
+        Nothing -> getInContexts context id
+        Just val -> val
+
+getInContext :: ValContext -> Id -> Maybe Value
+getInContext [] _ = Nothing
+getInContext ((idv, valv):vars) id | idv == id = Just valv
+                                   | otherwise = getInContext vars id
+
+
 
 updateVal :: Env -> Id -> Value -> Env
 updateVal = undefined
