@@ -16,12 +16,14 @@ import Control.Monad.State
 type PrintProg a = StateT Env IO a
 
 -- to try, with execStateT
-errorF :: PrintProg ()
+errorF :: PrintProg Value
 errorF = evalFun (Id "test") [] 
             (createEnv (PDefs [(DFun Type_int (Id "main") [] [])]))
 -- for interpret            
 errorProg :: Program
 errorProg = PDefs [(DFun Type_int (Id "test") [] [])]
+
+
 
 interpret :: Program -> IO ()
 interpret p = do
@@ -29,11 +31,13 @@ interpret p = do
     putStr ""
 
 
-evalFun :: Id -> [Var] -> Env -> PrintProg ()
+evalFun :: Id -> [Var] -> Env -> PrintProg Value
 evalFun id args env = do
     put env
     case getBody id env of
-        Right err -> liftIO $ putStrLn err
+        Right err -> do 
+            liftIO $ putStrLn err
+            return VNul
         Left (fun, funArg)  -> do 
             defEnv <- get 
             put $ addArgs defEnv funArg args
@@ -47,10 +51,8 @@ getBody id (context, (idFun, body, args):funContext)
    | otherwise   = getBody id (context, funContext)
 
 
-evalDef :: [Stm] -> PrintProg ()
-evalDef stms = do
-    returnValue <- evalStatements stms
-    return ()
+evalDef :: [Stm] -> PrintProg Value
+evalDef = evalStatements 
 
 
 evalStatements :: [Stm] -> PrintProg Value
