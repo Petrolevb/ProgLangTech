@@ -11,6 +11,19 @@ data Value = VDouble Double
            | VNul 
     deriving Eq
 
+vTimesv :: Value -> Value -> Value
+(VInt i)    `vTimesv` (VInt i2) = VInt (i*i2)
+(VDouble i) `vTimesv` (VDouble i2) = VDouble (i*i2)
+vPlusv :: Value -> Value -> Value
+(VInt i)    `vPlusv` (VInt i2) = VInt (i+i2)
+(VDouble i) `vPlusv` (VDouble i2) = VDouble (i+i2)
+vMinusv :: Value -> Value -> Value
+(VInt i)    `vMinusv` (VInt i2) = VInt (i-i2)
+(VDouble i) `vMinusv` (VDouble i2) = VDouble (i-i2)
+vDivv :: Value -> Value -> Value
+vDivv (VInt i) (VInt i2) = VInt (i `div`i2)
+
+
 type Env = ([ValContext], [FunContext])
 
 type ValContext = [Var]
