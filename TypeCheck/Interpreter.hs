@@ -169,20 +169,20 @@ evalExp (EMinus e1 e2) = do
 
 
 evalExp (ELt e1 e2) = do
-    (VBool val1) <- evalExp e1
-    (VBool val2) <- evalExp e2
+    val1 <- evalExp e1
+    val2 <- evalExp e2
     return $ VBool (val1 < val2)
 evalExp (EGt e1 e2) = do
-    (VBool val1) <- evalExp e1
-    (VBool val2) <- evalExp e2
+    val1 <- evalExp e1
+    val2 <- evalExp e2
     return $ VBool (val1 > val2)
 evalExp (ELtEq e1 e2) = do
-    (VBool val1) <- evalExp e1
-    (VBool val2) <- evalExp e2
+    val1 <- evalExp e1
+    val2 <- evalExp e2
     return $ VBool (val1 <= val2)
 evalExp (EGtWq e1 e2) = do
-    (VBool val1) <- evalExp e1
-    (VBool val2) <- evalExp e2
+    val1 <- evalExp e1
+    val2 <- evalExp e2
     return $ VBool (val1 >= val2)
 
 evalExp (EEq e1 e2) = do

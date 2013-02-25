@@ -31,7 +31,20 @@ data Value = VDouble Double
            | VInt Integer 
            | VBool Bool
            | VNul 
-    deriving Eq
+    deriving Eq 
+
+
+-- Disallow all comparison between types which doesn't match
+-- since it's considered as an error in the typechecker
+instance Ord Value where
+    (VInt v1)    > (VInt v2)    = v1 > v2
+    (VDouble v1) > (VDouble v2) = v1 > v2
+    (VInt v1)    < (VInt v2)    = v1 < v2
+    (VDouble v1) < (VDouble v2) = v1 < v2
+    (VInt v1)    >= (VInt v2)    = v1 >= v2
+    (VDouble v1) >= (VDouble v2) = v1 >= v2
+    (VInt v1)    <= (VInt v2)    = v1 <= v2
+    (VDouble v1) <= (VDouble v2) = v1 <= v2
 
 vTimesv :: Value -> Value -> Value
 (VInt i)    `vTimesv` (VInt i2) = VInt (i*i2)
