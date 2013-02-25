@@ -159,7 +159,7 @@ infer gamma (EApp id exps) = do
 
 infer gamma (EIncr e)      = do
     te <- infer gamma e
-    typeResult (te == Type_int)
+    typeResult (te `elem` [Type_double, Type_int])
     Ok Type_int
 infer gamma (EPIncr e)     = infer gamma (EIncr e)
 infer gamma (EPDecr e)     = infer gamma (EIncr e)

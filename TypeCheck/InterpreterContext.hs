@@ -47,14 +47,20 @@ instance Ord Value where
     (VDouble v1) <= (VDouble v2) = v1 <= v2
 
 vTimesv :: Value -> Value -> Value
-(VInt i)    `vTimesv` (VInt i2) = VInt (i*i2)
+(VInt i)    `vTimesv` (VInt i2)    = VInt (i*i2)
 (VDouble i) `vTimesv` (VDouble i2) = VDouble (i*i2)
+(VDouble d) `vTimesv` (VInt i)     = VDouble (d  * (fromInteger i))
+(VInt i) `vTimesv` (VDouble d)     = vTimesv (VDouble d) (VInt i)
 vPlusv :: Value -> Value -> Value
-(VInt i)    `vPlusv` (VInt i2) = VInt (i+i2)
+(VInt i)    `vPlusv` (VInt i2)    = VInt (i+i2)
 (VDouble i) `vPlusv` (VDouble i2) = VDouble (i+i2)
+(VDouble d) `vPlusv` (VInt i)     = VDouble (d + (fromInteger i))
+(VInt i) `vPlusv` (VDouble d)     = vPlusv (VDouble d) (VInt i)
 vMinusv :: Value -> Value -> Value
-(VInt i)    `vMinusv` (VInt i2) = VInt (i-i2)
+(VInt i)    `vMinusv` (VInt i2)    = VInt (i-i2)
 (VDouble i) `vMinusv` (VDouble i2) = VDouble (i-i2)
+(VDouble d) `vMinusv` (VInt i)     = VDouble (d - (fromInteger i))
+(VInt i) `vMinusv` (VDouble d)     = VDouble ((fromInteger i) - d)
 vDivv :: Value -> Value -> Value
 vDivv (VInt i) (VInt i2) = VInt (i `div`i2)
 

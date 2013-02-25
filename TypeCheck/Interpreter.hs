@@ -130,28 +130,28 @@ evalExp (EApp id exp) =
 
 evalExp (EPIncr (EId id)) = do
     env <- get
-    let (VInt value) = getVal env id
-    let newEnv = updateVal env id (VInt (value+1))
+    let value = getVal env id
+    let newEnv = updateVal env id (value `vPlusv` (VInt 1))
     put newEnv
-    return $ (VInt value)
+    return value
 evalExp (EPDecr (EId id)) = do
     env <- get
-    let (VInt value) = getVal env id
-    let newEnv = updateVal env id (VInt (value-1))
+    let value = getVal env id
+    let newEnv = updateVal env id (value `vMinusv` (VInt 1))
     put newEnv
-    return $ (VInt value)
+    return value
 evalExp (EIncr (EId id)) = do
     env <- get
-    let (VInt value) = getVal env id
-    let newEnv = updateVal env id (VInt (value+1))
+    let value = getVal env id
+    let newEnv = updateVal env id (value `vPlusv` (VInt 1))
     put newEnv
-    return $ (VInt (value+1))
+    return $ value `vPlusv` (VInt 1)
 evalExp (EDecr (EId id)) = do
     env <- get
-    let (VInt value) = getVal env id
-    let newEnv = updateVal env id (VInt (value-1))
+    let value = getVal env id
+    let newEnv = updateVal env id (value `vMinusv` (VInt 1))
     put newEnv
-    return $ (VInt (value-1))
+    return $ value `vMinusv` (VInt 1)
 
 evalExp (ETimes e1 e2  ) = do
     val1 <- evalExp e1
