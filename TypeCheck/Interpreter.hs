@@ -195,8 +195,11 @@ evalExp (ENEq e1 e2) = do
     return $ VBool (val1 /= val2)
 evalExp (EAnd e1 e2) = do
     (VBool val1) <- evalExp e1
-    (VBool val2) <- evalExp e2
-    return $ VBool (val1 && val2)
+    if val1 
+        then do
+            (VBool val2) <- evalExp e2
+            return $ VBool val2
+        else return (VBool False)
 evalExp (EOr e1 e2) = do
     (VBool val1) <- evalExp e1
     if val1 
