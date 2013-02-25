@@ -24,6 +24,7 @@ interpret p =
             execStateT (evalFun (Id "main") [] (createEnv p)) emptyEnv
             putStr ""
         Just err -> do 
+            putStr "SYNTAX ERROR"
             fail err
             exitFailure
 
