@@ -152,7 +152,10 @@ infer gamma (ETrue)        = Ok Type_bool
 infer gamma (EFalse)       = Ok Type_bool
 infer gamma (EInt _)       = Ok Type_int
 infer gamma (EDouble _)    = Ok Type_double
-infer gamma (EId id)       = lookupVar id gamma
+infer gamma (EId id)       = do 
+    case lookupVar id gamma of
+        Bad _ -> lookupInFun id gamma
+        Ok  t -> Ok t
 infer gamma (EApp id exps) = do 
     (_, typeFun) <- lookupFun id gamma
     return typeFun

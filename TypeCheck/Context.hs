@@ -19,11 +19,11 @@ extendVar (s, gamma:stack, sigs)   id ty =
     -- Take care to not look inside the stack !
     case (lookupVar id (s, [gamma], sigs)) of
         Bad _ -> Ok (s, ((ty, id):gamma):stack, sigs) -- not found, so ok
-        Ok  _ -> Bad "Variable already exist"
+        Ok  _ -> Bad ("Variable " ++ show id ++ " already exist in top context")
 extendVar (s, [], sigs) id ty = 
     case (lookupVar id (s, [], sigs)) of
         Bad _ -> Ok (s, [[(ty, id)]], sigs)
-        Ok  _ -> Bad "Variable already exist"
+        Ok  _ -> Bad "Variable already exist in signature"
 
 emptyEnv :: Signature -> Env
 emptyEnv s = (s, [], [])
@@ -39,7 +39,8 @@ funToSign (DFun typeFun name args stms) = ((name, (fromArgs args, typeFun)), stm
 -- get informations from the context
 
 lookupVar :: Id -> Env -> Err Type
-lookupVar id (s, [], ss)                 = lookupInFun id (s, [], ss)
+-- lookupVar id (s, [], ss)                 = lookupInFun id (s, [], ss)
+lookupVar id (s, [], ss)                 = Bad "Variable not found in stack"
 lookupVar id (s, []:stack, ss)           = lookupVar id (s, stack, ss)
 lookupVar id (s, ((t, i):env):stack, ss) | i == id   = Ok t
                                          | otherwise = lookupVar id (s, env:stack, ss)
@@ -48,7 +49,7 @@ lookupVar id (s, ((t, i):env):stack, ss) | i == id   = Ok t
 -- check in the signature of the function
 lookupInFun :: Id -> Env -> Err Type
 lookupInFun id ((_, (args, _)), _, _) = lookInArgs id args
-    where   lookInArgs id []  = Bad "Variable not found"
+    where   lookInArgs id []  = Bad "Variable not found in signature"
             lookInArgs id ((tyArg,idArg):args) 
                 | id == idArg = Ok tyArg
                 | otherwise   = lookInArgs id args
