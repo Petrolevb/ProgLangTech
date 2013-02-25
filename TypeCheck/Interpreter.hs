@@ -1,5 +1,7 @@
-{-# OPTIONS -XTypeSynonymInstances -XFlexibleInstances #-}
+{-# OPTIONS  -XTypeSynonymInstances -XFlexibleInstances #-}
 module Interpreter where
+
+import System.Exit (exitFailure)
 
 import AbsCPP
 import PrintCPP
@@ -15,29 +17,29 @@ import Control.Monad.State
 
 type PrintProg a = StateT Env IO a
 
--- to try, with execStateT
-errorF :: PrintProg Value
-errorF = evalFun (Id "test") [] 
-            (createEnv (PDefs [(DFun Type_int (Id "main") [] [])]))
--- for interpret            
-errorProg :: Program
-errorProg = PDefs [(DFun Type_int (Id "test") [] [])]
-
-
-
 interpret :: Program -> IO ()
-interpret p = do
-    execStateT (evalFun (Id "main") [] (createEnv p)) emptyEnv
-    putStr ""
+interpret p = 
+    case searchMain p of
+        Nothing -> do
+            execStateT (evalFun (Id "main") [] (createEnv p)) emptyEnv
+            putStr ""
+        Just err -> do 
+            fail err
+            exitFailure
 
+searchMain :: Program -> Maybe String
+searchMain (PDefs defs) = searchInDefs defs
+    where searchInDefs [] = Just "No main function"
+          searchInDefs (DFun _ id _ _ :defs) 
+            | id == Id "main" = Nothing
+            | otherwise         = searchInDefs defs
+                            
 
 evalFun :: Id -> [Value] -> Env -> PrintProg Value
 evalFun id args env = do
     put env
     case getBody id env of
-        Right err -> do 
-            liftIO $ putStrLn err
-            return VNul
+        Right err -> fail err
         Left (fun, funArg)  -> do 
             defEnv <- get 
             put $ addArgs defEnv funArg args
@@ -76,8 +78,7 @@ evalStatement (SInit ty id exp) = do
     env <- get
     put $ addVar env (id, value)
     return VNul
-evalStatement (SReturn exp) = do
-    evalExp exp
+evalStatement (SReturn exp) = evalExp exp
 evalStatement (SWhile exp stm) = do
     (VBool val) <- evalExp exp
     if val
@@ -102,7 +103,7 @@ evalStatement (SIfElse e stm stm2) = do
 -- Special case for evalExp Application
 evalExpA :: Exp -> PrintProg Value
 evalExpA (EApp id exp) = do
-    vars <- sequence $ map evalExp exp
+    vars <- mapM evalExp exp
     (save, funcont) <- get
     returnVal <- evalFun id vars ([], funcont)
     put (save, funcont)
@@ -120,8 +121,8 @@ evalExp (EId id) = do
 
 evalExp (EApp id exp) = 
     case id of
-        (Id "printInt") -> evalExp expS >>= (\val -> appPrintInt val)
-        (Id "printDouble") -> evalExp expS >>= (\val -> appPrintDouble val)
+        (Id "printInt") -> evalExp expS >>= appPrintInt 
+        (Id "printDouble") -> evalExp expS >>= appPrintDouble
         (Id "readInt" ) -> appReadInt
         (Id "readDouble" ) -> appReadDouble
         (Id oth) -> evalExpA (EApp id exp)
@@ -131,27 +132,21 @@ evalExp (EApp id exp) =
 evalExp (EPIncr (EId id)) = do
     env <- get
     let value = getVal env id
-    let newEnv = updateVal env id (value `vPlusv` (VInt 1))
+    let newEnv = updateVal env id (value `vPlusv` VInt 1)
     put newEnv
     return value
 evalExp (EPDecr (EId id)) = do
     env <- get
     let value = getVal env id
-    let newEnv = updateVal env id (value `vMinusv` (VInt 1))
+    let newEnv = updateVal env id (value `vMinusv` VInt 1)
     put newEnv
     return value
 evalExp (EIncr (EId id)) = do
-    env <- get
-    let value = getVal env id
-    let newEnv = updateVal env id (value `vPlusv` (VInt 1))
-    put newEnv
-    return $ value `vPlusv` (VInt 1)
+    value <- evalExp (EPIncr (EId id))
+    return $ value `vPlusv` VInt 1
 evalExp (EDecr (EId id)) = do
-    env <- get
-    let value = getVal env id
-    let newEnv = updateVal env id (value `vMinusv` (VInt 1))
-    put newEnv
-    return $ value `vMinusv` (VInt 1)
+    value <- evalExp (EPDecr (EId id))
+    return $ value `vMinusv` VInt 1
 
 evalExp (ETimes e1 e2  ) = do
     val1 <- evalExp e1
@@ -223,19 +218,19 @@ applyFunc v1 f v2 = v1 `f` v2
 
 appPrintInt :: Value -> PrintProg Value
 appPrintInt (VInt int) = do
-    liftIO $ putStrLn $ show int
+    liftIO $ print int
     return VNul
 appPrintDouble :: Value -> PrintProg Value
 appPrintDouble (VDouble double) = do
-    liftIO $ putStrLn $ show double
+    liftIO $ print double
     return VNul
 appReadInt :: PrintProg Value
 appReadInt = do
-    val <- liftIO $ readInt
+    val <- liftIO readInt
     return $ VInt val
 appReadDouble :: PrintProg Value
 appReadDouble = do
-    val <- liftIO $ readDouble
+    val <- liftIO readDouble
     return $ VDouble val
 
 readInt :: IO Integer

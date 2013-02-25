@@ -53,8 +53,7 @@ checkStm gamma (SDecls t ids) =
     -- all variables already added and checked
     -- nothing to do
 
-checkStm gamma (SInit t i e) = do
-    checkExp gamma e t
+checkStm gamma (SInit t i e) = checkExp gamma e t
 
 checkStm gamma (SReturn e) =  do
     treturn <- infer gamma e
@@ -90,7 +89,7 @@ checkExp gamma (EApp   id exp) t = do
     -- Function return same type as requested
     typeResult (t == typeFun)
     -- Same number of argument as requested
-    typeResult ((length exp) == (length tysids))
+    typeResult (length exp == length tysids)
     checkAllArgs tysids exp
         where
             checkAllArgs [] [] = Ok ()
@@ -152,7 +151,7 @@ infer gamma (ETrue)        = Ok Type_bool
 infer gamma (EFalse)       = Ok Type_bool
 infer gamma (EInt _)       = Ok Type_int
 infer gamma (EDouble _)    = Ok Type_double
-infer gamma (EId id)       = do 
+infer gamma (EId id)       = 
     case lookupVar id gamma of
         Bad _ -> lookupInFun id gamma
         Ok  t -> Ok t

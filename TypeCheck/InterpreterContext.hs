@@ -27,6 +27,8 @@ import LexCPP
 import ParCPP
 import ErrM
 
+import Data.Maybe (fromMaybe)
+
 data Value = VDouble Double 
            | VInt Integer 
            | VBool Bool
@@ -49,18 +51,18 @@ instance Ord Value where
 vTimesv :: Value -> Value -> Value
 (VInt i)    `vTimesv` (VInt i2)    = VInt (i*i2)
 (VDouble i) `vTimesv` (VDouble i2) = VDouble (i*i2)
-(VDouble d) `vTimesv` (VInt i)     = VDouble (d  * (fromInteger i))
+(VDouble d) `vTimesv` (VInt i)     = VDouble (d  * fromInteger i)
 (VInt i) `vTimesv` (VDouble d)     = vTimesv (VDouble d) (VInt i)
 vPlusv :: Value -> Value -> Value
 (VInt i)    `vPlusv` (VInt i2)    = VInt (i+i2)
 (VDouble i) `vPlusv` (VDouble i2) = VDouble (i+i2)
-(VDouble d) `vPlusv` (VInt i)     = VDouble (d + (fromInteger i))
+(VDouble d) `vPlusv` (VInt i)     = VDouble (d + fromInteger i)
 (VInt i) `vPlusv` (VDouble d)     = vPlusv (VDouble d) (VInt i)
 vMinusv :: Value -> Value -> Value
 (VInt i)    `vMinusv` (VInt i2)    = VInt (i-i2)
 (VDouble i) `vMinusv` (VDouble i2) = VDouble (i-i2)
-(VDouble d) `vMinusv` (VInt i)     = VDouble (d - (fromInteger i))
-(VInt i) `vMinusv` (VDouble d)     = VDouble ((fromInteger i) - d)
+(VDouble d) `vMinusv` (VInt i)     = VDouble (d - fromInteger i)
+(VInt i) `vMinusv` (VDouble d)     = VDouble (fromInteger i - d)
 vDivv :: Value -> Value -> Value
 vDivv (VInt i) (VInt i2) = VInt (i `div`i2)
 
@@ -86,13 +88,13 @@ addIO :: [Def] -> [Def]
 addIO defs = readInt:readDouble:printInt:printDouble:defs
 
 readInt :: Def
-readInt  = (DFun Type_int  (Id "readInt")  [] [])
+readInt  = DFun Type_int  (Id "readInt")  [] []
 printInt :: Def
-printInt = (DFun Type_void (Id "printInt") [(ADecl Type_int (Id "arg"))] [])
+printInt = DFun Type_void (Id "printInt") [ADecl Type_int (Id "arg")] []
 readDouble :: Def
-readDouble  = (DFun Type_double  (Id "readDouble")  [] [])
+readDouble  = DFun Type_double  (Id "readDouble")  [] []
 printDouble :: Def
-printDouble = (DFun Type_void (Id "printDouble") [(ADecl Type_double (Id "arg"))] [])
+printDouble = DFun Type_void (Id "printDouble") [ADecl Type_double (Id "arg")] []
 
 -- Function which take an environement
 -- Variables name from function
@@ -120,14 +122,8 @@ getVal :: Env -> Id -> Value
 getVal (context, _) = getInContexts context
 
 getInContexts ::  [ValContext]-> Id -> Value
-getInContexts [vars] id = 
-    case getInContext vars id of
-        Nothing -> undefined -- Theorically impossible
-        Just val -> val
-getInContexts (vars:context) id = 
-    case getInContext vars id of
-        Nothing -> getInContexts context id
-        Just val -> val
+getInContexts [vars] id = fromMaybe undefined (getInContext vars id)
+getInContexts (vars:context) id = fromMaybe (getInContexts context id) (getInContext vars id)
 
 getInContext :: ValContext -> Id -> Maybe Value
 getInContext [] _ = Nothing
@@ -146,7 +142,7 @@ updateInContexts [vars] id val =
         Just valcon -> [valcon]
 updateInContexts (vars:ss) id val = 
     case updateInContext vars id val of
-        Nothing -> vars:(updateInContexts ss id val)
+        Nothing -> vars : updateInContexts ss id val
         Just valcon -> valcon:ss
 
 updateInContext :: ValContext -> Id -> Value -> Maybe [Var]

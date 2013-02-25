@@ -22,13 +22,13 @@ addIOFun env = extendFun
                 printDouble
 
 readInt :: Def
-readInt  = (DFun Type_int  (Id "readInt")  [] [])
+readInt  = DFun Type_int  (Id "readInt")  [] []
 printInt :: Def
-printInt = (DFun Type_void (Id "printInt") [(ADecl Type_int (Id "arg"))] [])
+printInt = DFun Type_void (Id "printInt") [ADecl Type_int (Id "arg")] []
 readDouble :: Def
-readDouble  = (DFun Type_double  (Id "readDouble")  [] [])
+readDouble  = DFun Type_double  (Id "readDouble")  [] []
 printDouble :: Def
-printDouble = (DFun Type_void (Id "printDouble") [(ADecl Type_double (Id "arg"))] [])
+printDouble = DFun Type_void (Id "printDouble") [ADecl Type_double (Id "arg")] []
 
 
 -- Update an env from a block of statement
@@ -38,7 +38,7 @@ buildEnvFromStatement e (SDecls  typ ids)       = newenv
     where newenv = extendVars e ids typ
           extendVars e (id:[]) typ  = extendVar e id typ
           extendVars e (id:ids) typ = 
-                (extendVar e id typ) >>= (\a -> extendVars a ids typ)
+                extendVar e id typ >>= (\a -> extendVars a ids typ)
 buildEnvFromStatement e (SInit   typ id expVal) = newenv
     where newenv = extendVar e id typ
 buildEnvFromStatement e (SReturn exp)           = buildEnvFromExp e exp
