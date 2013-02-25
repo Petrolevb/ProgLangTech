@@ -1,4 +1,26 @@
-module InterpreterContext where
+module InterpreterContext (
+    Value (VDouble,VInt,VBool,VNul),
+    Env,
+    ValContext,
+    FunContext,
+    Var,
+
+    vTimesv,
+    vPlusv,
+    vMinusv,
+    vDivv,
+    
+    emptyEnv,
+    createEnv,
+    addVar,
+    addArgs,
+    getVal,
+    updateVal,
+
+    addNewBlock,
+    removeBlock
+
+) where
 
 import AbsCPP
 import LexCPP
@@ -38,16 +60,28 @@ createEnv :: Program -> Env
 createEnv (PDefs defs) = ([], funCon)
     where 
         funCon = map (\(DFun _ name arg body) 
-                        -> (name, body, vars arg)) defs
+                        -> (name, body, vars arg)) (addIO defs)
         vars args = [ (id, VNul) | (ADecl _ id) <- args ]
+
+addIO :: [Def] -> [Def]
+addIO defs = readInt:readDouble:printInt:printDouble:defs
+
+readInt :: Def
+readInt  = (DFun Type_int  (Id "readInt")  [] [])
+printInt :: Def
+printInt = (DFun Type_void (Id "printInt") [(ADecl Type_int (Id "arg"))] [])
+readDouble :: Def
+readDouble  = (DFun Type_double  (Id "readDouble")  [] [])
+printDouble :: Def
+printDouble = (DFun Type_void (Id "printDouble") [(ADecl Type_double (Id "arg"))] [])
 
 -- Function which take an environement
 -- Variables name from function
 -- Variables value from the call
 -- Return the environement
-addArgs :: Env -> [Var] -> [Var] -> Env
+addArgs :: Env -> [Var] -> [Value] -> Env
 addArgs env [] [] = env
-addArgs env ((id, _):argN) ((_, val):argV) 
+addArgs env ((id, _):argN) (val:argV) 
     = addArgs (addVar env (id, val)) argN argV
 
 addVar :: Env -> Var -> Env
@@ -84,4 +118,22 @@ getInContext ((idv, valv):vars) id | idv == id = Just valv
 
 
 updateVal :: Env -> Id -> Value -> Env
-updateVal = undefined
+updateVal (context, f) id val = (updateInContexts context id val, f)
+
+updateInContexts :: [ValContext] -> Id -> Value -> [ValContext]
+updateInContexts [vars] id val = 
+    case updateInContext vars id val of
+        Nothing -> undefined -- Theorically impossible
+        Just valcon -> [valcon]
+updateInContexts (vars:ss) id val = 
+    case updateInContext vars id val of
+        Nothing -> vars:(updateInContexts ss id val)
+        Just valcon -> valcon:ss
+
+updateInContext :: ValContext -> Id -> Value -> Maybe [Var]
+updateInContext [] _ _ = Nothing
+updateInContext ((idv, valv):vars) id val 
+    | idv == id = Just ((idv, val):vars)
+    | otherwise = case updateInContext vars id val of
+                Nothing -> Nothing
+                Just newVC -> Just ((idv, valv):newVC)

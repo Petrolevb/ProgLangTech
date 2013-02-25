@@ -31,7 +31,7 @@ interpret p = do
     putStr ""
 
 
-evalFun :: Id -> [Var] -> Env -> PrintProg Value
+evalFun :: Id -> [Value] -> Env -> PrintProg Value
 evalFun id args env = do
     put env
     case getBody id env of
@@ -96,6 +96,15 @@ evalStatement (SIfElse e stm stm2) = do
         else evalStatement stm2
 
 
+-- Special case for evalExp Application
+evalExpA :: Exp -> PrintProg Value
+evalExpA (EApp id exp) = do
+    vars <- sequence $ map evalExp exp
+    (save, funcont) <- get
+    returnVal <- evalFun id vars ([], funcont)
+    put (save, funcont)
+    return returnVal
+
 -- 0 for false, 1 for true, Nothing for void
 evalExp :: Exp -> PrintProg Value
 evalExp (ETrue) = return $ VBool True
@@ -106,7 +115,15 @@ evalExp (EId id) = do
     thenEnv <- get
     return $ getVal thenEnv id
 
-evalExp (EApp id [exp]) = undefined
+evalExp (EApp id exp) = 
+    case id of
+        (Id "printInt") -> evalExp expS >>= (\val -> appPrintInt val)
+        (Id "printDouble") -> evalExp expS >>= (\val -> appPrintDouble val)
+        (Id "readInt" ) -> appReadInt
+        (Id "readDouble" ) -> appReadDouble
+        (Id oth) -> evalExpA (EApp id exp)
+    where expS = getTop exp
+          getTop (e:_) = e
 
 evalExp (EPIncr exp) = do
     (VInt val) <- evalExp exp
@@ -176,7 +193,34 @@ evalExp (EOr e1 e2) = do
             (VBool val2) <- evalExp e2
             return $ VBool val2
 
-evalExp (EAss e1 e2) = undefined
+evalExp (EAss (EId id) e2) = do
+    vallToAss <- evalExp e2
+    env <- get
+    put $ updateVal env id vallToAss
+    return vallToAss
 
 applyFunc :: Value -> (Value -> Value -> Value) -> Value -> Value
 applyFunc v1 f v2 = v1 `f` v2
+
+
+appPrintInt :: Value -> PrintProg Value
+appPrintInt (VInt int) = do
+    liftIO $ putStrLn $ show int
+    return VNul
+appPrintDouble :: Value -> PrintProg Value
+appPrintDouble (VDouble double) = do
+    liftIO $ putStrLn $ show double
+    return VNul
+appReadInt :: PrintProg Value
+appReadInt = undefined
+appReadDouble :: PrintProg Value
+appReadDouble = undefined
+
+readInt :: IO Int
+readInt = do
+    val <- getLine
+    return (read val :: Int)
+readDouble :: IO Double
+readDouble = do
+    val <- getLine
+    return (read val :: Double)
