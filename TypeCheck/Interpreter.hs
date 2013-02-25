@@ -212,14 +212,18 @@ appPrintDouble (VDouble double) = do
     liftIO $ putStrLn $ show double
     return VNul
 appReadInt :: PrintProg Value
-appReadInt = undefined
+appReadInt = do
+    val <- liftIO $ readInt
+    return $ VInt val
 appReadDouble :: PrintProg Value
-appReadDouble = undefined
+appReadDouble = do
+    val <- liftIO $ readDouble
+    return $ VDouble val
 
-readInt :: IO Int
+readInt :: IO Integer
 readInt = do
     val <- getLine
-    return (read val :: Int)
+    return (read val :: Integer)
 readDouble :: IO Double
 readDouble = do
     val <- getLine
