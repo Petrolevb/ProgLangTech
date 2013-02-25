@@ -56,6 +56,7 @@ evalDef = evalStatements
 
 
 evalStatements :: [Stm] -> PrintProg Value
+evalStatements [] = return VNul
 evalStatements [stm] = evalStatement stm
 evalStatements (stm:stms) = do
     evalStatement stm
@@ -80,7 +81,9 @@ evalStatement (SReturn exp) = do
 evalStatement (SWhile exp stm) = do
     (VBool val) <- evalExp exp
     if val
-        then evalStatement stm
+        then do 
+            evalStatement stm
+            evalStatement (SWhile exp stm)
         else return VNul
 evalStatement (SBlock stms)    = do
             env <- get
