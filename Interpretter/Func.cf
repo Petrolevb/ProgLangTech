@@ -1,1 +1,43 @@
+entrypoints Funcs ;
 
+
+
+Program . Funcs ::= [Func] ;
+
+terminator Func ";" ;
+
+
+DefFuncArg . Func ::= FIndent [Arg] "=" Exp ;
+BasFunc    . Func ::= FIndent "=" Exp ;
+
+separator nonempty Arg " " ;
+
+Argument . Arg ::= FIndent ;
+
+Identif . Exp4 ::= FIndent ;
+Integ   . Exp4 ::= Integer ;
+
+Application . Exp3 ::= Exp3 ;
+
+Addition . Exp2 ::= Exp1 "+" Exp2 ;
+Substrac . Exp2 ::= Exp1 "-" Exp2 ;
+Multipli . Exp2 ::= Exp1 "*" Exp2 ;
+Division . Exp2 ::= Exp1 "/" Exp2 ;
+
+Lt  . Exp2 ::= Exp1 "<" Exp2 ;
+Gt  . Exp2 ::= Exp1 ">" Exp2 ;
+LEt . Exp2 ::= Exp1 "<=" Exp2;
+GEt . Exp2 ::= Exp1 ">=" Exp2;
+Eq  . Exp2 ::= Exp1 "==" Exp2;
+NEq . Exp2 ::= Exp1 "!=" Exp2;
+
+Condition . Exp1 ::= "if" Exp "then" Exp "else" Exp ;
+
+Abstraction . Exp1 ::= "\\" . "->" Exp1 ;
+
+coercions Exp 4 ;
+separator Exp "" ;
+
+token position FIndent (lower (letter | digit | '_')*) ;
+
+comment "--" ;
