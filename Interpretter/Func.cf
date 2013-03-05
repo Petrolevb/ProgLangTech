@@ -10,34 +10,34 @@ terminator Func ";" ;
 DefFuncArg . Func ::= FIndent [Arg] "=" Exp ;
 BasFunc    . Func ::= FIndent "=" Exp ;
 
-separator nonempty Arg " " ;
+separator nonempty Arg "" ;
 
 Argument . Arg ::= FIndent ;
 
 Identif . Exp4 ::= FIndent ;
 Integ   . Exp4 ::= Integer ;
 
-Application . Exp3 ::= Exp3 ;
+Application . Exp3 ::= FIndent Exp;
 
-Addition . Exp2 ::= Exp1 "+" Exp2 ;
-Substrac . Exp2 ::= Exp1 "-" Exp2 ;
-Multipli . Exp2 ::= Exp1 "*" Exp2 ;
-Division . Exp2 ::= Exp1 "/" Exp2 ;
+Addition . Exp2 ::= Exp2 "+" Exp1 ;
+Substrac . Exp2 ::= Exp2 "-" Exp1 ;
+Multipli . Exp2 ::= Exp2 "*" Exp1 ;
+Division . Exp2 ::= Exp2 "/" Exp1 ;
 
-Lt  . Exp2 ::= Exp1 "<" Exp2 ;
-Gt  . Exp2 ::= Exp1 ">" Exp2 ;
-LEt . Exp2 ::= Exp1 "<=" Exp2;
-GEt . Exp2 ::= Exp1 ">=" Exp2;
-Eq  . Exp2 ::= Exp1 "==" Exp2;
-NEq . Exp2 ::= Exp1 "!=" Exp2;
+Lt  . Exp2 ::= Exp2 "<" Exp1 ;
+Gt  . Exp2 ::= Exp2 ">" Exp1 ;
+LEt . Exp2 ::= Exp2 "<=" Exp1;
+GEt . Exp2 ::= Exp2 ">=" Exp1;
+Eq  . Exp2 ::= Exp2 "==" Exp1;
+NEq . Exp2 ::= Exp2 "!=" Exp1;
 
 Condition . Exp1 ::= "if" Exp "then" Exp "else" Exp ;
 
 Abstraction . Exp1 ::= "\\" FIndent "->" Exp1 ;
 
 coercions Exp 4 ;
-separator Exp "" ;
+--separator Exp "" ;
 
-position token FIndent ( lower (letter | digit | '_')* ) ;
+token FIndent ( lower (letter | digit | '_')* ) ;
 
 comment "--" ;

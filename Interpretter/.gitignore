@@ -1,0 +1,9 @@
+*.hi
+*.o
+Doc*
+lab3
+TestFunc
+Par*
+Lex*
+*Func.*
+ErrM.hs
