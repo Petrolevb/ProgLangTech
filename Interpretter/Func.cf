@@ -30,6 +30,8 @@ LEt . Exp2 ::= Exp2 "<=" Exp1;
 GEt . Exp2 ::= Exp2 ">=" Exp1;
 Eq  . Exp2 ::= Exp2 "==" Exp1;
 NEq . Exp2 ::= Exp2 "!=" Exp1;
+And . Exp2 ::= Exp2 "||" Exp1;
+Or  . Exp2 ::= Exp2 "&&" Exp1;
 
 Condition . Exp1 ::= "if" Exp "then" Exp "else" Exp ;
 
