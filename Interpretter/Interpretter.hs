@@ -1,5 +1,7 @@
 module Interpretter (interpret)  where
 
+import System.Exit (exitFailure)
+
 import AbsFunc
 
 import ErrM
@@ -9,7 +11,10 @@ type Env = [(FIndent, Func)] -- List of all functions
 --interpret :: (Print a, Show a) => Funcs -> Err ()
 interpret :: Funcs -> IO ()
 interpret prog = case searchFunc "main" (buildEnv prog) of
-    Bad err -> putStrLn err
+    Bad err -> do
+        putStrLn "INTERPRETTER ERROR"
+        putStrLn err
+        exitFailure
     Ok  _   -> putStrLn "Main found"
 
 buildEnv :: Funcs -> Env

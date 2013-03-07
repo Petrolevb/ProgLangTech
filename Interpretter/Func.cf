@@ -17,7 +17,8 @@ Argument . Arg ::= FIndent ;
 Identif . Exp4 ::= FIndent ;
 Integ   . Exp4 ::= Integer ;
 
-Application . Exp3 ::= FIndent Exp;
+Application . Exp3 ::= FIndent [Exp];
+separator nonempty Exp "" ;
 
 Addition . Exp2 ::= Exp2 "+" Exp1 ;
 Substrac . Exp2 ::= Exp2 "-" Exp1 ;
