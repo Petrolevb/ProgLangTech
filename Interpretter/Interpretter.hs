@@ -7,37 +7,63 @@ import AbsFunc
 import ErrM
 
 type Env = [(FIndent, Func)] -- List of all functions
-
+type FuncEnv = ([(FIndent, Integer)], Env)
 --interpret :: (Print a, Show a) => Funcs -> Err ()
 interpret :: Funcs -> IO ()
-interpret prog = case searchFunc "main" (buildEnv prog) of
-    Bad err -> do
+interpret prog = case searchFunc "main" envProg of
+    Bad err  -> do
         putStrLn "INTERPRETTER ERROR"
         putStrLn err
         exitFailure
-    Ok  _   -> putStrLn "Main found"
+    Ok  main -> case evalFunc envProg main of
+        Bad err -> do
+            putStrLn "INTERPRETTER ERROR"
+            putStrLn err
+            exitFailure
+        Ok i    -> putStrLn $ show i
+  where envProg = buildEnv prog
 
-buildEnv :: Funcs -> Env
-buildEnv (Program fs) = map 
+buildEnv :: Funcs -> FuncEnv
+buildEnv (Program fs) = ([], map 
     (\f -> case f of 
         DefFuncArg fi _ _ -> (fi, f)
         BasFunc fi _      -> (fi, f)
-    ) fs
+    ) fs)
 
-searchFunc :: String -> Env -> Err Func
-searchFunc fu [] = Bad (fu ++ " not found")
-searchFunc fu ((ss, f):env) | ss == FIndent fu = Ok f
-                            | otherwise            = 
-                              searchFunc fu env
+searchFunc :: String -> FuncEnv -> Err Func
+searchFunc fu (_, []) = Bad (fu ++ " not found")
+searchFunc fu (e, ((ss, f):env))
+                      | ss == FIndent fu = Ok f
+                      | otherwise        = 
+                              searchFunc fu (e, env)
 
-evalFunc :: Env -> Func -> Err Integer
-evalFunc env (DefFuncArg _ args exp) = undefined
+
+addArgs :: [Arg] -> FuncEnv -> FuncEnv
+addArgs args (funcEnv, env) = (add args funcEnv, env)
+    where add [] f = f
+          add ((Argument arg):args) ((_, value):vars) 
+                    = (arg, value):add args vars
+
+-- Values added before the call of a function
+addValues :: [Integer] -> FuncEnv -> Err FuncEnv
+addValues values (vals, env) = Ok (add values vals, env)
+    where add [] vals = vals
+          add (i, is) vals = (FIndent "", i) : add is vals
+
+evalFunc :: FuncEnv -> Func -> Err Integer
+evalFunc env (DefFuncArg _ args exp) = evalExp (addArgs args env) exp
 evalFunc env (BasFunc _ exp) = evalExp env exp
 
-evalExp :: Env -> Exp -> Err Integer
-evalExp env (Identif a) = undefined
+evalExp :: FuncEnv -> Exp -> Err Integer
+evalExp env (Identif a) = searchFunc (fromFI a) env >>= evalFunc env
+    where fromFI (FIndent s) = s
 evalExp env (Integ i) = Ok i
-evalExp env (Application fi e) = undefined
+evalExp env (Application (FIndent fi) exp) = do
+    is <- mapM (evalExp env) exp
+    newEnv <- addValues is env
+    func <- searchFunc fi newEnv
+    evalFunc newEnv func
+
 evalExp env (Addition e1 e2) = do
     r1 <- evalExp env e1
     r2 <- evalExp env e2
